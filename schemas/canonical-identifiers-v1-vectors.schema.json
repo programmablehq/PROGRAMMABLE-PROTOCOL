@@ -1,0 +1,617 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:programmable:schema:canonical-identifiers-vectors:v1",
+  "title": "Canonical identifier V1 conformance vectors",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "protocol_spec_id",
+    "algorithms",
+    "cases",
+    "relations"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "urn:programmable:schema:canonical-identifiers-vectors:v1"
+    },
+    "protocol_spec_id": {
+      "$ref": "#/$defs/protocol_spec_id"
+    },
+    "algorithms": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonical_json_test", "authorization_scope_v1"],
+      "properties": {
+        "canonical_json_test": {
+          "$ref": "#/$defs/algorithm_canonical_json"
+        },
+        "authorization_scope_v1": {
+          "$ref": "#/$defs/algorithm_authorization_scope"
+        }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    },
+    "relations": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/relation"
+      }
+    }
+  },
+  "$defs": {
+    "protocol_spec_id": {
+      "type": "string",
+      "pattern": "^programmable-protocol/[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.]+)?$"
+    },
+    "decimal": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "hex_bytes": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{2})+$"
+    },
+    "case_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]+$"
+    },
+    "required_profiles": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "contains": {
+        "const": "portable-core-v1"
+      },
+      "minContains": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]+$"
+      }
+    },
+    "algorithm_canonical_json": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonicalization",
+        "hash",
+        "domain_prefix",
+        "separator",
+        "output"
+      ],
+      "properties": {
+        "canonicalization": {
+          "const": "RFC8785-JCS"
+        },
+        "hash": {
+          "const": "SHA-256"
+        },
+        "domain_prefix": {
+          "const": "programmable:canonical-json-test:v1"
+        },
+        "separator": {
+          "const": "00"
+        },
+        "output": {
+          "const": "sha256-lowercase-hex"
+        }
+      }
+    },
+    "algorithm_authorization_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonicalization",
+        "hash",
+        "domain_prefix",
+        "separator",
+        "output",
+        "excluded_preimage_categories"
+      ],
+      "properties": {
+        "canonicalization": {
+          "const": "RFC8785-JCS"
+        },
+        "hash": {
+          "const": "SHA-256"
+        },
+        "domain_prefix": {
+          "const": "programmable:authorization-scope:v1"
+        },
+        "separator": {
+          "const": "00"
+        },
+        "output": {
+          "const": "sha256-lowercase-hex"
+        },
+        "excluded_preimage_categories": {
+          "const": ["computed_scope_id", "native_signature_material"]
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "market_id",
+        "engine_revision_id",
+        "domain_revision_ids",
+        "action_payload_digest",
+        "execution_phase"
+      ],
+      "properties": {
+        "market_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "engine_revision_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "domain_revision_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/digest"
+          }
+        },
+        "action_payload_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "execution_phase": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        }
+      }
+    },
+    "asset_authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "native_asset_id",
+        "asset_profile_id",
+        "max_market_execution_gross_debit",
+        "max_protocol_assessment_gross_debit",
+        "max_total_gross_debit",
+        "max_market_execution_external_withholding",
+        "max_protocol_assessment_external_withholding",
+        "credit_recipient_policy_digest",
+        "minimum_spendable_credit"
+      ],
+      "properties": {
+        "native_asset_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "asset_profile_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "max_market_execution_gross_debit": {
+          "$ref": "#/$defs/decimal"
+        },
+        "max_protocol_assessment_gross_debit": {
+          "$ref": "#/$defs/decimal"
+        },
+        "max_total_gross_debit": {
+          "$ref": "#/$defs/decimal"
+        },
+        "max_market_execution_external_withholding": {
+          "$ref": "#/$defs/decimal"
+        },
+        "max_protocol_assessment_external_withholding": {
+          "$ref": "#/$defs/decimal"
+        },
+        "credit_recipient_policy_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "minimum_spendable_credit": {
+          "$ref": "#/$defs/decimal"
+        }
+      }
+    },
+    "deadline": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": {
+              "const": "non_expiring"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "clock_id", "not_after"],
+          "properties": {
+            "kind": {
+              "const": "bounded"
+            },
+            "clock_id": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:-]+$"
+            },
+            "not_after": {
+              "$ref": "#/$defs/decimal"
+            }
+          }
+        }
+      ]
+    },
+    "sponsored_assessment_authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessment_authorization_scope_id",
+        "assessment_principal_id",
+        "asset_profile_id",
+        "native_asset_id",
+        "maximum_gross_assessment_debit",
+        "protocol_collector_id"
+      ],
+      "properties": {
+        "assessment_authorization_scope_id": {"$ref": "#/$defs/digest"},
+        "assessment_principal_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "asset_profile_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "native_asset_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "maximum_gross_assessment_debit": {"$ref": "#/$defs/decimal"},
+        "protocol_collector_id": {"type": "string", "minLength": 1, "maxLength": 256}
+      }
+    },
+    "scope_descriptor_v1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "$schema",
+        "protocol_spec_id",
+        "constitution_id",
+        "runtime_id",
+        "chain_reference",
+        "core_deployment_id",
+        "binding_scope_domain_separator",
+        "authorization_profile_id",
+        "principal_id",
+        "principal_nonce",
+        "ordered_targets",
+        "asset_authorizations",
+        "deadline",
+        "partial_fill_policy",
+        "cancellation_policy"
+      ],
+      "properties": {
+        "$schema": {
+          "const": "urn:programmable:schema:authorization-scope-descriptor:v1"
+        },
+        "protocol_spec_id": {
+          "$ref": "#/$defs/protocol_spec_id"
+        },
+        "constitution_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "runtime_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "chain_reference": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "core_deployment_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "binding_scope_domain_separator": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "authorization_profile_id": {
+          "enum": [
+            "direct-one-shot-v1",
+            "signed-one-shot-v1",
+            "stored-scope-v1"
+          ]
+        },
+        "principal_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "principal_nonce": {
+          "$ref": "#/$defs/decimal"
+        },
+        "ordered_targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/target"
+          }
+        },
+        "asset_authorizations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/asset_authorization"
+          }
+        },
+        "sponsored_assessment_authorizations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/sponsored_assessment_authorization"}
+        },
+        "deadline": {
+          "$ref": "#/$defs/deadline"
+        },
+        "partial_fill_policy": {
+          "enum": ["forbidden", "cumulative_fills_allowed"]
+        },
+        "cancellation_policy": {
+          "const": "cancel_closes_scope"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "authorization_profile_id": {
+                "enum": ["direct-one-shot-v1", "signed-one-shot-v1"]
+              }
+            },
+            "required": ["authorization_profile_id"]
+          },
+          "then": {
+            "properties": {
+              "partial_fill_policy": {
+                "const": "forbidden"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authorization_profile_id": {
+                "const": "stored-scope-v1"
+              }
+            },
+            "required": ["authorization_profile_id"]
+          },
+          "then": {
+            "properties": {
+              "partial_fill_policy": {
+                "const": "cumulative_fills_allowed"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id", "purpose", "required_profiles", "operation"],
+      "properties": {
+        "case_id": {
+          "$ref": "#/$defs/case_id"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_profiles": {
+          "$ref": "#/$defs/required_profiles"
+        },
+        "operation": {
+          "enum": ["canonical_json_digest", "authorization_scope_id"]
+        },
+        "input_utf8_hex": {
+          "$ref": "#/$defs/hex_bytes"
+        },
+        "scope_descriptor": {
+          "$ref": "#/$defs/scope_descriptor_v1"
+        },
+        "expected_canonical_utf8_hex": {
+          "$ref": "#/$defs/hex_bytes"
+        },
+        "expected_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "reject_code": {
+          "enum": [
+            "duplicate_object_key",
+            "invalid_json",
+            "ijson_lone_surrogate",
+            "json_number_forbidden",
+            "non_ascii_object_key",
+            "duplicate_asset_authorization_tuple",
+            "duplicate_sponsored_assessment_tuple",
+            "sponsored_assessment_asset_not_authorized",
+            "sponsored_assessment_limit_exceeds_asset_authorization"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "canonical_json_digest"
+              }
+            },
+            "required": ["operation"]
+          },
+          "then": {
+            "properties": {
+              "input_utf8_hex": {}
+            },
+            "required": ["input_utf8_hex"],
+            "not": {
+              "properties": {
+                "scope_descriptor": {}
+              },
+              "required": ["scope_descriptor"]
+            }
+          },
+          "else": {
+            "properties": {
+              "scope_descriptor": {}
+            },
+            "required": ["scope_descriptor"],
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {"input_utf8_hex": {}},
+                  "required": ["input_utf8_hex"]
+                },
+                {
+                  "properties": {"expected_canonical_utf8_hex": {}},
+                  "required": ["expected_canonical_utf8_hex"]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "expected_digest": {}
+              },
+              "required": ["expected_digest"],
+              "not": {
+                "properties": {
+                  "reject_code": {}
+                },
+                "required": ["reject_code"]
+              }
+            },
+            {
+              "properties": {
+                "reject_code": {}
+              },
+              "required": ["reject_code"],
+              "not": {
+                "anyOf": [
+                  {
+                    "properties": {"expected_digest": {}},
+                    "required": ["expected_digest"]
+                  },
+                  {
+                    "properties": {"expected_canonical_utf8_hex": {}},
+                    "required": ["expected_canonical_utf8_hex"]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {"const": "canonical_json_digest"},
+              "expected_digest": {}
+            },
+            "required": ["operation", "expected_digest"]
+          },
+          "then": {
+            "properties": {
+              "expected_canonical_utf8_hex": {}
+            },
+            "required": ["expected_canonical_utf8_hex"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "scope_descriptor": {
+                "type": "object",
+                "properties": {
+                  "authorization_profile_id": {
+                    "const": "stored-scope-v1"
+                  }
+                },
+                "required": ["authorization_profile_id"]
+              }
+            },
+            "required": ["scope_descriptor"]
+          },
+          "then": {
+            "properties": {
+              "required_profiles": {
+                "type": "array",
+                "contains": {
+                  "const": "stored-scope-v1"
+                },
+                "minContains": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "scope_descriptor": {
+                "type": "object",
+                "properties": {
+                  "sponsored_assessment_authorizations": {"type": "array", "minItems": 1}
+                },
+                "required": ["sponsored_assessment_authorizations"]
+              }
+            },
+            "required": ["scope_descriptor"]
+          },
+          "then": {
+            "properties": {
+              "required_profiles": {
+                "type": "array",
+                "contains": {"const": "sponsored-assessment-v1"},
+                "minContains": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relation_id", "purpose", "operator", "case_ids"],
+      "properties": {
+        "relation_id": {
+          "$ref": "#/$defs/case_id"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operator": {
+          "enum": ["equal_digest", "distinct_digest"]
+        },
+        "case_ids": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/case_id"
+          }
+        }
+      }
+    }
+  }
+}

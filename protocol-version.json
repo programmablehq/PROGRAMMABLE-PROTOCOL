@@ -1,0 +1,47 @@
+{
+  "$schema": "urn:programmable:schema:protocol-release:v1",
+  "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+  "constitution_document": "constitution/programmable-constitution-v1.json",
+  "status": "draft",
+  "production_eligible": false,
+  "normative_documents": [
+    "spec/00-status-and-scope.md",
+    "spec/01-semantic-model.md",
+    "spec/02-execution-and-authority.md",
+    "spec/03-protocol-assessment.md",
+    "spec/04-evidence-and-discovery.md",
+    "spec/05-versioning.md",
+    "spec/06-security-properties.md",
+    "spec/07-conformance.md",
+    "spec/08-protected-effect-algebra.md",
+    "spec/09-bounded-session-state-machine.md",
+    "spec/10-canonical-identifiers.md",
+    "spec/11-release-artifact-identity.md",
+    "spec/glossary.md",
+    "bindings/README.md",
+    "bindings/evm.md",
+    "bindings/svm.md"
+  ],
+  "schemas": [
+    "schemas/protocol-release-v1.schema.json",
+    "schemas/constitution-v1.schema.json",
+    "schemas/market-template-v1.schema.json",
+    "schemas/binding-release-v1.schema.json",
+    "schemas/deployment-manifest-v1.schema.json",
+    "schemas/conformance-report-v1.schema.json",
+    "schemas/bounded-session-v1-vectors.schema.json",
+    "schemas/canonical-identifiers-v1-vectors.schema.json",
+    "schemas/evidence-v1-vectors.schema.json",
+    "schemas/protected-effects-v1-vectors.schema.json",
+    "schemas/protocol-assessment-v1-vectors.schema.json",
+    "schemas/identifier-v1-vectors.schema.json"
+  ],
+  "conformance_vectors": [
+    "vectors/bounded-session-v1.json",
+    "vectors/canonical-identifiers-v1.json",
+    "vectors/evidence-v1.json",
+    "vectors/identifiers-v1.json",
+    "vectors/protected-effects-v1.json",
+    "vectors/protocol-assessment-v1.json"
+  ]
+}

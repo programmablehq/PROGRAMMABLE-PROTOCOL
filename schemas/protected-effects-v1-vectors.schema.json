@@ -1,0 +1,367 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:programmable:schema:protected-effects-vectors:v1",
+  "title": "Protected Effects V1 conformance vectors",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "protocol_spec_id", "effect_profile_id", "cases"],
+  "properties": {
+    "$schema": {"const": "urn:programmable:schema:protected-effects-vectors:v1"},
+    "protocol_spec_id": {"type": "string", "minLength": 1},
+    "effect_profile_id": {"const": "programmable.protected-effects.v1"},
+    "cases": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/case"}}
+  },
+  "$defs": {
+    "decimal": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
+    "identifier": {"type": "string", "minLength": 1, "pattern": "^[^\\s]+$"},
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "profile_id": {
+      "enum": [
+        "portable-core-v1",
+        "stored-scope-v1",
+        "bounded-session-v1",
+        "sponsored-assessment-v1",
+        "external-asset-tax-v1",
+        "engine-independent-exit-v1"
+      ]
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id", "purpose", "required_profiles", "outcome", "input"],
+      "properties": {
+        "case_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$"},
+        "purpose": {"type": "string", "minLength": 1},
+        "required_profiles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/profile_id"},
+          "contains": {"const": "portable-core-v1"}
+        },
+        "outcome": {"enum": ["accept", "reject"]},
+        "reject_code": {"type": "string", "pattern": "^[a-z][a-z0-9_]+$"},
+        "input": {"$ref": "#/$defs/input"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"outcome": {"const": "reject"}}, "required": ["outcome"]},
+          "then": {"properties": {"reject_code": true}, "required": ["reject_code"]},
+          "else": {"not": {"required": ["reject_code"]}}
+        },
+        {
+          "if": {
+            "properties": {
+              "input": {
+                "type": "object",
+                "properties": {"execution_profile": {"const": "BOUNDED_SESSION_V1"}},
+                "required": ["execution_profile"]
+              }
+            },
+            "required": ["input"]
+          },
+          "then": {
+            "properties": {
+              "required_profiles": {"type": "array", "contains": {"const": "bounded-session-v1"}}
+            }
+          }
+        }
+      ]
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["execution_profile", "resource_limits", "capabilities", "proposed_effects", "observed_obligation_closures"],
+      "properties": {
+        "execution_profile": {"enum": ["ATOMIC_PLAN_V1", "BOUNDED_SESSION_V1"]},
+        "resource_limits": {"$ref": "#/$defs/resource_limits"},
+        "capabilities": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/capability"}},
+        "proposed_effects": {"type": "array", "items": {"$ref": "#/$defs/proposed_effect"}},
+        "observed_obligation_closures": {"type": "array", "items": {"$ref": "#/$defs/obligation_closure"}}
+      }
+    },
+    "resource_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_effect_occurrences", "max_asset_move_gross_total"],
+      "properties": {
+        "max_effect_occurrences": {"$ref": "#/$defs/decimal"},
+        "max_asset_move_gross_total": {"$ref": "#/$defs/decimal"}
+      }
+    },
+    "capability": {
+      "oneOf": [
+        {"$ref": "#/$defs/asset_move_capability"},
+        {"$ref": "#/$defs/core_rights_capability"},
+        {"$ref": "#/$defs/profile_operation_capability"},
+        {"$ref": "#/$defs/temporary_obligation_capability"}
+      ]
+    },
+    "asset_move_capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability_instance_id", "capability_id", "authorization_scope_id", "execution_target_id", "constraint"],
+      "properties": {
+        "capability_instance_id": {"$ref": "#/$defs/identifier"},
+        "capability_id": {"const": "programmable.capability.asset_move.v1"},
+        "authorization_scope_id": {"$ref": "#/$defs/identifier"},
+        "execution_target_id": {"$ref": "#/$defs/identifier"},
+        "constraint": {"$ref": "#/$defs/asset_move_constraint"}
+      }
+    },
+    "asset_move_constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "native_source_id", "source_domain_revision_id", "destination_domain_revision_id", "asset_profile_id",
+        "native_asset_id", "recipient_id", "max_gross_debit", "minimum_spendable_credit_floor", "external_withholding_ceiling"
+      ],
+      "properties": {
+        "native_source_id": {"$ref": "#/$defs/identifier"},
+        "source_domain_revision_id": {"$ref": "#/$defs/identifier"},
+        "destination_domain_revision_id": {"$ref": "#/$defs/identifier"},
+        "asset_profile_id": {"$ref": "#/$defs/identifier"},
+        "native_asset_id": {"$ref": "#/$defs/identifier"},
+        "recipient_id": {"$ref": "#/$defs/identifier"},
+        "max_gross_debit": {"$ref": "#/$defs/decimal"},
+        "minimum_spendable_credit_floor": {"$ref": "#/$defs/decimal"},
+        "external_withholding_ceiling": {"$ref": "#/$defs/decimal"}
+      }
+    },
+    "core_rights_capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability_instance_id", "capability_id", "authorization_scope_id", "execution_target_id", "constraint"],
+      "properties": {
+        "capability_instance_id": {"$ref": "#/$defs/identifier"},
+        "capability_id": {"const": "programmable.capability.core_rights.v1"},
+        "authorization_scope_id": {"$ref": "#/$defs/identifier"},
+        "execution_target_id": {"$ref": "#/$defs/identifier"},
+        "constraint": {"$ref": "#/$defs/core_rights_constraint"}
+      }
+    },
+    "core_rights_constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rights_profile_id", "right_id", "subject_id", "recipient_id", "direction", "max_amount",
+        "backing_domain_revision_ids", "custody_profile_id", "exit_profile_id"
+      ],
+      "properties": {
+        "rights_profile_id": {"$ref": "#/$defs/identifier"},
+        "right_id": {"$ref": "#/$defs/identifier"},
+        "subject_id": {"$ref": "#/$defs/identifier"},
+        "recipient_id": {"$ref": "#/$defs/identifier"},
+        "direction": {"enum": ["increase", "decrease", "transfer"]},
+        "max_amount": {"$ref": "#/$defs/decimal"},
+        "backing_domain_revision_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/identifier"}},
+        "custody_profile_id": {"$ref": "#/$defs/identifier"},
+        "exit_profile_id": {"$ref": "#/$defs/identifier"}
+      }
+    },
+    "profile_operation_capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability_instance_id", "capability_id", "authorization_scope_id", "execution_target_id", "constraint"],
+      "properties": {
+        "capability_instance_id": {"$ref": "#/$defs/identifier"},
+        "capability_id": {"const": "programmable.capability.profile_operation.v1"},
+        "authorization_scope_id": {"$ref": "#/$defs/identifier"},
+        "execution_target_id": {"$ref": "#/$defs/identifier"},
+        "constraint": {"$ref": "#/$defs/profile_operation_constraint"}
+      }
+    },
+    "profile_operation_constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "operation_id", "operation_target_id", "protected_profile_component_revision_id", "parameters_digest"],
+      "properties": {
+        "profile_id": {"$ref": "#/$defs/identifier"},
+        "operation_id": {"$ref": "#/$defs/identifier"},
+        "operation_target_id": {"$ref": "#/$defs/identifier"},
+        "protected_profile_component_revision_id": {"$ref": "#/$defs/identifier"},
+        "parameters_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "temporary_obligation_capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability_instance_id", "capability_id", "authorization_scope_id", "execution_target_id", "constraint"],
+      "properties": {
+        "capability_instance_id": {"$ref": "#/$defs/identifier"},
+        "capability_id": {"const": "programmable.capability.temporary_obligation.v1"},
+        "authorization_scope_id": {"$ref": "#/$defs/identifier"},
+        "execution_target_id": {"$ref": "#/$defs/identifier"},
+        "constraint": {"$ref": "#/$defs/temporary_obligation_constraint"}
+      }
+    },
+    "temporary_obligation_constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "paired_asset_move_occurrence_id", "session_id", "opening_segment", "opening_ordinal", "close_by_segment_ordinal",
+        "source_domain_revision_id", "native_asset_id", "asset_profile_id", "obligated_actor_id",
+        "return_destination_id", "return_condition", "must_be_closed_before_phase", "max_amount"
+      ],
+      "properties": {
+        "paired_asset_move_occurrence_id": {"$ref": "#/$defs/identifier"},
+        "session_id": {"$ref": "#/$defs/identifier"},
+        "opening_segment": {"$ref": "#/$defs/decimal"},
+        "opening_ordinal": {"$ref": "#/$defs/decimal"},
+        "close_by_segment_ordinal": {"$ref": "#/$defs/decimal"},
+        "source_domain_revision_id": {"$ref": "#/$defs/identifier"},
+        "native_asset_id": {"$ref": "#/$defs/identifier"},
+        "asset_profile_id": {"$ref": "#/$defs/identifier"},
+        "obligated_actor_id": {"$ref": "#/$defs/identifier"},
+        "return_destination_id": {"$ref": "#/$defs/identifier"},
+        "return_condition": {"enum": ["gross", "spendable"]},
+        "must_be_closed_before_phase": {"const": "RECONCILING"},
+        "max_amount": {"$ref": "#/$defs/decimal"}
+      }
+    },
+    "proposed_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "occurrence_id", "effect_id", "effect_kind", "capability_instance_id", "authorization_scope_id",
+        "execution_target_id", "segment_sequence", "ordinal", "payload"
+      ],
+      "properties": {
+        "occurrence_id": {"$ref": "#/$defs/identifier"},
+        "effect_id": {"$ref": "#/$defs/identifier"},
+        "effect_kind": {"enum": ["asset_move", "core_rights_delta", "profile_operation", "temporary_obligation_open", "generic_call", "core_derived_claim", "opaque"]},
+        "capability_instance_id": {"$ref": "#/$defs/identifier"},
+        "authorization_scope_id": {"$ref": "#/$defs/identifier"},
+        "execution_target_id": {"$ref": "#/$defs/identifier"},
+        "segment_sequence": {"$ref": "#/$defs/decimal"},
+        "ordinal": {"$ref": "#/$defs/decimal"},
+        "payload": {"type": "object"}
+      },
+      "allOf": [
+        {"if": {"properties": {"effect_kind": {"const": "asset_move"}}, "required": ["effect_kind"]}, "then": {"properties": {"payload": {"$ref": "#/$defs/asset_move_payload"}}}},
+        {"if": {"properties": {"effect_kind": {"const": "core_rights_delta"}}, "required": ["effect_kind"]}, "then": {"properties": {"payload": {"$ref": "#/$defs/core_rights_payload"}}}},
+        {"if": {"properties": {"effect_kind": {"const": "profile_operation"}}, "required": ["effect_kind"]}, "then": {"properties": {"payload": {"$ref": "#/$defs/profile_operation_payload"}}}},
+        {"if": {"properties": {"effect_kind": {"const": "temporary_obligation_open"}}, "required": ["effect_kind"]}, "then": {"properties": {"payload": {"$ref": "#/$defs/temporary_obligation_payload"}}}},
+        {"if": {"properties": {"effect_kind": {"const": "generic_call"}}, "required": ["effect_kind"]}, "then": {"properties": {"payload": {"$ref": "#/$defs/generic_call_payload"}}}},
+        {"if": {"properties": {"effect_kind": {"const": "core_derived_claim"}}, "required": ["effect_kind"]}, "then": {"properties": {"payload": {"$ref": "#/$defs/core_derived_claim_payload"}}}},
+        {"if": {"properties": {"effect_kind": {"const": "opaque"}}, "required": ["effect_kind"]}, "then": {"properties": {"payload": {"$ref": "#/$defs/opaque_payload"}}}}
+      ]
+    },
+    "asset_move_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "native_source_id", "source_domain_revision_id", "destination_domain_revision_id", "asset_profile_id",
+        "native_asset_id", "recipient_id", "gross_debit", "minimum_spendable_credit", "external_withholding_ceiling"
+      ],
+      "properties": {
+        "native_source_id": {"$ref": "#/$defs/identifier"},
+        "source_domain_revision_id": {"$ref": "#/$defs/identifier"},
+        "destination_domain_revision_id": {"$ref": "#/$defs/identifier"},
+        "asset_profile_id": {"$ref": "#/$defs/identifier"},
+        "native_asset_id": {"$ref": "#/$defs/identifier"},
+        "recipient_id": {"$ref": "#/$defs/identifier"},
+        "gross_debit": {"$ref": "#/$defs/decimal"},
+        "minimum_spendable_credit": {"$ref": "#/$defs/decimal"},
+        "external_withholding_ceiling": {"$ref": "#/$defs/decimal"}
+      }
+    },
+    "core_rights_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rights_profile_id", "right_id", "subject_id", "recipient_id", "direction", "amount", "backing_domain_revision_ids", "custody_profile_id", "exit_profile_id"],
+      "properties": {
+        "rights_profile_id": {"$ref": "#/$defs/identifier"},
+        "right_id": {"$ref": "#/$defs/identifier"},
+        "subject_id": {"$ref": "#/$defs/identifier"},
+        "recipient_id": {"$ref": "#/$defs/identifier"},
+        "direction": {"enum": ["increase", "decrease", "transfer"]},
+        "amount": {"$ref": "#/$defs/decimal"},
+        "backing_domain_revision_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/identifier"}},
+        "custody_profile_id": {"$ref": "#/$defs/identifier"},
+        "exit_profile_id": {"$ref": "#/$defs/identifier"}
+      }
+    },
+    "profile_operation_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "operation_id", "operation_target_id", "protected_profile_component_revision_id", "parameters_digest"],
+      "properties": {
+        "profile_id": {"$ref": "#/$defs/identifier"},
+        "operation_id": {"$ref": "#/$defs/identifier"},
+        "operation_target_id": {"$ref": "#/$defs/identifier"},
+        "protected_profile_component_revision_id": {"$ref": "#/$defs/identifier"},
+        "parameters_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "temporary_obligation_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "paired_asset_move_occurrence_id", "session_id", "opening_segment", "opening_ordinal", "close_by_segment_ordinal",
+        "source_domain_revision_id", "native_asset_id", "asset_profile_id", "obligated_actor_id",
+        "return_destination_id", "return_condition", "must_be_closed_before_phase", "amount"
+      ],
+      "properties": {
+        "paired_asset_move_occurrence_id": {"$ref": "#/$defs/identifier"},
+        "session_id": {"$ref": "#/$defs/identifier"},
+        "opening_segment": {"$ref": "#/$defs/decimal"},
+        "opening_ordinal": {"$ref": "#/$defs/decimal"},
+        "close_by_segment_ordinal": {"$ref": "#/$defs/decimal"},
+        "source_domain_revision_id": {"$ref": "#/$defs/identifier"},
+        "native_asset_id": {"$ref": "#/$defs/identifier"},
+        "asset_profile_id": {"$ref": "#/$defs/identifier"},
+        "obligated_actor_id": {"$ref": "#/$defs/identifier"},
+        "return_destination_id": {"$ref": "#/$defs/identifier"},
+        "return_condition": {"enum": ["gross", "spendable"]},
+        "must_be_closed_before_phase": {"const": "RECONCILING"},
+        "amount": {"$ref": "#/$defs/decimal"}
+      }
+    },
+    "generic_call_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["external_target_id", "call_data_digest", "native_value"],
+      "properties": {
+        "external_target_id": {"$ref": "#/$defs/identifier"},
+        "call_data_digest": {"$ref": "#/$defs/digest"},
+        "native_value": {"$ref": "#/$defs/decimal"}
+      }
+    },
+    "core_derived_claim_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authoritative_amount", "authoritative_sequence"],
+      "properties": {
+        "authoritative_amount": {"$ref": "#/$defs/decimal"},
+        "authoritative_sequence": {"$ref": "#/$defs/decimal"}
+      }
+    },
+    "opaque_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["opaque_digest"],
+      "properties": {"opaque_digest": {"$ref": "#/$defs/digest"}}
+    },
+    "obligation_closure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "closure_id", "obligation_occurrence_ids", "source_actor_id", "return_destination_id",
+        "source_domain_revision_id", "asset_profile_id", "native_asset_id", "return_condition", "amount", "segment_sequence"
+      ],
+      "properties": {
+        "closure_id": {"$ref": "#/$defs/identifier"},
+        "obligation_occurrence_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/identifier"}},
+        "source_actor_id": {"$ref": "#/$defs/identifier"},
+        "return_destination_id": {"$ref": "#/$defs/identifier"},
+        "source_domain_revision_id": {"$ref": "#/$defs/identifier"},
+        "asset_profile_id": {"$ref": "#/$defs/identifier"},
+        "native_asset_id": {"$ref": "#/$defs/identifier"},
+        "return_condition": {"enum": ["gross", "spendable"]},
+        "amount": {"$ref": "#/$defs/decimal"},
+        "segment_sequence": {"$ref": "#/$defs/decimal"}
+      }
+    }
+  }
+}

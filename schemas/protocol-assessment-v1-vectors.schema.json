@@ -1,0 +1,327 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:programmable:schema:protocol-assessment-vectors:v1",
+  "title": "ProtocolAssessmentV1 conformance vectors",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "protocol_spec_id",
+    "assessment_profile",
+    "authenticated_principal_evidence",
+    "cases"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "urn:programmable:schema:protocol-assessment-vectors:v1"
+    },
+    "protocol_spec_id": {
+      "type": "string",
+      "pattern": "^programmable-protocol/[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.]+)?$"
+    },
+    "assessment_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "constitution_id",
+        "assessment_id",
+        "basis_id",
+        "exclusion_set_id",
+        "rate_numerator",
+        "rate_denominator",
+        "reduced_denominator",
+        "rounding",
+        "minimum",
+        "flat_component",
+        "fee_asset_rule",
+        "funding_rule",
+        "assessment_amount_rule",
+        "arithmetic_bits",
+        "collector_policy"
+      ],
+      "properties": {
+        "constitution_id": {"$ref": "#/$defs/digest"},
+        "assessment_id": {"const": "ProtocolAssessmentV1"},
+        "basis_id": {"const": "PrincipalFundedGrossDebitV1"},
+        "exclusion_set_id": {"const": "PrincipalFundedGrossDebitV1ClosedExclusions"},
+        "rate_numerator": {"const": "5"},
+        "rate_denominator": {"const": "10000"},
+        "reduced_denominator": {"const": "2000"},
+        "rounding": {"const": "floor_after_cumulative_group_aggregation"},
+        "minimum": {"const": "0"},
+        "flat_component": {"const": "0"},
+        "fee_asset_rule": {"const": "same_as_basis_asset"},
+        "funding_rule": {"const": "additive"},
+        "assessment_amount_rule": {"const": "gross_source_debit"},
+        "arithmetic_bits": {"const": "128"},
+        "collector_policy": {"const": "immutable_per_core_deployment"}
+      }
+    },
+    "authenticated_principal_evidence": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/authenticated_principal_evidence"}
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/case"}
+    }
+  },
+  "$defs": {
+    "decimal": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$"
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "purpose",
+        "required_profiles",
+        "expected_status",
+        "groups"
+      ],
+      "properties": {
+        "case_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]+$"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_profiles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/profile_id"},
+          "contains": {"const": "portable-core-v1"}
+        },
+        "expected_status": {
+          "enum": ["accept", "reject"]
+        },
+        "expected_error": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_]+$"
+        },
+        "groups": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/group"}
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"expected_status": {"const": "reject"}},
+            "required": ["expected_status"]
+          },
+          "then": {
+            "properties": {
+              "expected_error": {}
+            },
+            "required": ["expected_error"]
+          },
+          "else": {"not": {"required": ["expected_error"]}}
+        }
+      ]
+    },
+    "group_key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "core_deployment_id",
+        "constitution_id",
+        "authorization_scope_id",
+        "assessment_principal_id",
+        "asset_profile_id",
+        "native_asset_id"
+      ],
+      "properties": {
+        "core_deployment_id": {"type": "string", "minLength": 1},
+        "constitution_id": {"$ref": "#/$defs/digest"},
+        "authorization_scope_id": {"type": "string", "minLength": 1},
+        "assessment_principal_id": {"type": "string", "minLength": 1},
+        "asset_profile_id": {"type": "string", "minLength": 1},
+        "native_asset_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["group_key", "protocol_collector_id", "basis_before", "fills"],
+      "properties": {
+        "group_key": {"$ref": "#/$defs/group_key"},
+        "protocol_collector_id": {"type": "string", "minLength": 1},
+        "basis_before": {"$ref": "#/$defs/decimal"},
+        "stored_assessment": {"$ref": "#/$defs/decimal"},
+        "fills": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/fill"}
+        }
+      }
+    },
+    "fill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fill_sequence",
+        "debits",
+        "refunds",
+        "protocol_withholding"
+      ],
+      "properties": {
+        "fill_sequence": {"$ref": "#/$defs/decimal"},
+        "debits": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/debit"}
+        },
+        "refunds": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/refund"}
+        },
+        "fee_funding_principal_id": {"type": "string", "minLength": 1},
+        "fee_funding_scope_id": {"$ref": "#/$defs/digest"},
+        "fee_funding_authorization_evidence_ref": {"$ref": "#/$defs/digest"},
+        "protocol_withholding": {"$ref": "#/$defs/decimal"},
+        "assessment_ceiling": {"$ref": "#/$defs/decimal"},
+        "force_postcondition_failure": {"type": "boolean"},
+        "expected": {"$ref": "#/$defs/expected"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"fee_funding_principal_id": {}},
+            "required": ["fee_funding_principal_id"]
+          },
+          "then": {
+            "properties": {
+              "fee_funding_scope_id": {},
+              "fee_funding_authorization_evidence_ref": {}
+            },
+            "required": [
+              "fee_funding_scope_id",
+              "fee_funding_authorization_evidence_ref"
+            ]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {"required": ["fee_funding_scope_id"]},
+                {"required": ["fee_funding_authorization_evidence_ref"]}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "authenticated_principal_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authorization_evidence_ref",
+        "authorization_scope_id",
+        "principal_id",
+        "authorization_profile_id",
+        "authentication_result",
+        "primary_provenance",
+        "execution_coverage",
+        "scope_descriptor"
+      ],
+      "properties": {
+        "authorization_evidence_ref": {"$ref": "#/$defs/digest"},
+        "authorization_scope_id": {"$ref": "#/$defs/digest"},
+        "principal_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "authorization_profile_id": {
+          "enum": ["direct-one-shot-v1", "signed-one-shot-v1", "stored-scope-v1"]
+        },
+        "authentication_result": {"const": "AUTHENTICATED"},
+        "primary_provenance": {"const": "CORE_VERIFIED"},
+        "execution_coverage": {"const": "CORE_ENFORCED"},
+        "scope_descriptor": {
+          "$ref": "urn:programmable:schema:canonical-identifiers-vectors:v1#/$defs/scope_descriptor_v1"
+        }
+      }
+    },
+    "debit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["debit_id", "amount", "classification"],
+      "properties": {
+        "debit_id": {"type": "string", "minLength": 1},
+        "amount": {"$ref": "#/$defs/decimal"},
+        "classification": {
+          "enum": ["applicable", "closed_exemption"]
+        },
+        "label": {"type": "string", "minLength": 1},
+        "included_disclosures": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "refund": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["refund_id", "origin_debit_id", "amount", "proof"],
+      "properties": {
+        "refund_id": {"type": "string", "minLength": 1},
+        "origin_debit_id": {"type": "string", "minLength": 1},
+        "amount": {"$ref": "#/$defs/decimal"},
+        "proof": {
+          "enum": [
+            "segregated_unused_origin",
+            "exact_pre_use_reversal",
+            "invalid_or_mixed_inventory"
+          ]
+        }
+      }
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "basis_before",
+        "fill_basis",
+        "basis_after",
+        "assessment_before",
+        "assessment_delta",
+        "assessment_after",
+        "remainder_before",
+        "remainder_after",
+        "emit_assessment_record",
+        "gross_assessment_debit",
+        "funded_credit",
+        "liability_delta"
+      ],
+      "properties": {
+        "basis_before": {"$ref": "#/$defs/decimal"},
+        "fill_basis": {"$ref": "#/$defs/decimal"},
+        "basis_after": {"$ref": "#/$defs/decimal"},
+        "assessment_before": {"$ref": "#/$defs/decimal"},
+        "assessment_delta": {"$ref": "#/$defs/decimal"},
+        "assessment_after": {"$ref": "#/$defs/decimal"},
+        "remainder_before": {"$ref": "#/$defs/decimal"},
+        "remainder_after": {"$ref": "#/$defs/decimal"},
+        "emit_assessment_record": {"type": "boolean"},
+        "gross_assessment_debit": {"$ref": "#/$defs/decimal"},
+        "funded_credit": {"$ref": "#/$defs/decimal"},
+        "liability_delta": {"$ref": "#/$defs/decimal"}
+      }
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "profile_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9][a-z0-9_-]*)+$"
+    }
+  }
+}

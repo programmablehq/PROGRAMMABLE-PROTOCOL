@@ -1,0 +1,171 @@
+{
+  "$schema": "urn:programmable:schema:deployment-manifest:v1",
+  "binding_release_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000001",
+  "portable_profiles": ["portable-core-v1"],
+  "portable_vector_set_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000002",
+  "binding_native_profile_claims": [
+    {
+      "claim_type": "binding_native",
+      "profile_id": "programmable.evm.direct-core.v1",
+      "conformance": {
+        "native_vector_set_path": "conformance/native/direct-core-v1.vectors.json",
+        "native_vector_set_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000003",
+        "native_test_report_path": "conformance/native/direct-core-v1.report.json",
+        "native_test_report_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000004"
+      }
+    }
+  ],
+  "asset_profile_claims": [
+    {
+      "claim_type": "asset_profile",
+      "asset_profile_id": "programmable.evm.asset.erc20-exact-balance.v1",
+      "conformance": {
+        "native_vector_set_path": "conformance/assets/erc20-exact-balance-v1.vectors.json",
+        "native_vector_set_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000005",
+        "native_test_report_path": "conformance/assets/erc20-exact-balance-v1.report.json",
+        "native_test_report_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000006"
+      }
+    }
+  ],
+  "runtime_family": "EVM",
+  "network": {
+    "namespace": "eip155",
+    "reference": "46630",
+    "genesis_or_anchor": "example-network-anchor",
+    "evidence_refs": ["evidence:network"]
+  },
+  "core": {
+    "native_id": "0x4d1a2e2bb4f88f0250f26ffff098b0b30b26bf38",
+    "core_major": "1",
+    "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+    "protocol_collector_id": "collector:example",
+    "artifact_digest": "sha256:6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+    "runtime_code_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "deployment": {
+    "transaction_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+    "ledger_position": "block:1",
+    "evidence_refs": ["evidence:deployment"]
+  },
+  "authority_evidence": {
+    "code_replacement": {
+      "conclusion": "not_assessed",
+      "evidence_refs": ["evidence:authority-placeholder"]
+    },
+    "configuration_mutation": {
+      "conclusion": "not_assessed",
+      "evidence_refs": ["evidence:authority-placeholder"]
+    },
+    "assessment_mutation": {
+      "conclusion": "not_assessed",
+      "evidence_refs": ["evidence:authority-placeholder"]
+    },
+    "pause_or_quarantine": {
+      "conclusion": "not_assessed",
+      "evidence_refs": ["evidence:authority-placeholder"]
+    },
+    "sweep_or_redirection": {
+      "conclusion": "not_assessed",
+      "evidence_refs": ["evidence:authority-placeholder"]
+    },
+    "forced_migration": {
+      "conclusion": "not_assessed",
+      "evidence_refs": ["evidence:authority-placeholder"]
+    }
+  },
+  "classification": "example",
+  "evidence_catalog": [
+    {
+      "evidence_id": "evidence:network",
+      "kind": "ledger_state",
+      "locator": "urn:example:evm:network",
+      "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000010",
+      "observed_at": "example-only"
+    },
+    {
+      "evidence_id": "evidence:deployment",
+      "kind": "deployment_transaction",
+      "locator": "urn:example:evm:deployment",
+      "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000011",
+      "observed_at": "example-only"
+    },
+    {
+      "evidence_id": "evidence:source",
+      "kind": "source_artifact",
+      "locator": "urn:example:evm:source",
+      "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000012",
+      "observed_at": "example-only"
+    },
+    {
+      "evidence_id": "evidence:build",
+      "kind": "reproducible_build",
+      "locator": "urn:example:evm:build",
+      "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000013",
+      "observed_at": "example-only"
+    },
+    {
+      "evidence_id": "evidence:live-code",
+      "kind": "runtime_query",
+      "locator": "urn:example:evm:live-code",
+      "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000014",
+      "observed_at": "example-only"
+    },
+    {
+      "evidence_id": "evidence:authority-placeholder",
+      "kind": "other",
+      "locator": "urn:example:not-assessed",
+      "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000015",
+      "observed_at": "example-only"
+    }
+  ],
+  "runtime_evidence": {
+    "runtime_family": "EVM",
+    "chain_id": "46630",
+    "transaction_sender": "0x3333333333333333333333333333333333333333",
+    "deployment_model": "direct",
+    "creation": {
+      "mechanism": "CREATE2",
+      "creator_native_id": "0x0000000000000000000000000000000000000000",
+      "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "init_code_digest": "sha256:6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "derived_native_id": "0x4d1a2e2bb4f88f0250f26ffff098b0b30b26bf38",
+      "evidence_refs": ["evidence:deployment"]
+    },
+    "initialization": {
+      "creation_input": "0x00",
+      "constructor_arguments": "0x",
+      "evidence_refs": ["evidence:deployment"]
+    },
+    "artifact": {
+      "source_commit": "1111111111111111111111111111111111111111",
+      "compiler": {
+        "name": "solc",
+        "version": "example",
+        "settings_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000020"
+      },
+      "creation_bytecode_digest": "sha256:6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "init_code_digest": "sha256:6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "runtime_bytecode_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "abi_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000022",
+      "source_evidence_refs": ["evidence:source"],
+      "reproducible_build_evidence_refs": ["evidence:build"],
+      "live_code_evidence_refs": ["evidence:live-code"]
+    },
+    "dynamic_target_policy_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000023",
+    "dependencies": [
+      {
+        "dependency_id": "dependency:example-runtime",
+        "role": "runtime_dependency",
+        "native_id": "0x4444444444444444444444444444444444444444",
+        "trust_class": "runtime_dependency",
+        "capability_scope_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000024",
+        "runtime_code_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000025",
+        "replacement_authority": {
+          "conclusion": "not_assessed",
+          "evidence_refs": ["evidence:authority-placeholder"]
+        },
+        "evidence_refs": ["evidence:live-code"]
+      }
+    ]
+  }
+}

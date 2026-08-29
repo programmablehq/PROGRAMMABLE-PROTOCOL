@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:programmable:schema:identifier-vectors:v1",
+  "title": "Portable identifier V1 conformance vectors",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "protocol_spec_id", "algorithm", "cases"],
+  "properties": {
+    "$schema": {"const": "urn:programmable:schema:identifier-vectors:v1"},
+    "protocol_spec_id": {
+      "type": "string",
+      "pattern": "^programmable-protocol/[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.]+)?$"
+    },
+    "algorithm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonicalization", "hash", "domain_prefix", "separator"],
+      "properties": {
+        "canonicalization": {"const": "RFC8785-JCS"},
+        "hash": {"const": "SHA-256"},
+        "domain_prefix": {"const": "programmable:market-template:v1"},
+        "separator": {"const": "00"}
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["case_id", "purpose", "document_path", "expected_id"],
+        "properties": {
+          "case_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$"},
+          "purpose": {"type": "string", "minLength": 1},
+        "document_path": {
+          "type": "string",
+          "pattern": "^examples/(?!(?:\\.{1,2})(?:/|$))[A-Za-z0-9._-]+(?:/(?!(?:\\.{1,2})(?:/|$))[A-Za-z0-9._-]+)*\\.json$"
+          },
+          "expected_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+        }
+      }
+    }
+  }
+}

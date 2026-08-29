@@ -1,0 +1,1595 @@
+{
+  "$schema": "urn:programmable:schema:evidence-vectors:v1",
+  "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+  "evidence_profile_id": "programmable.evidence.v1",
+  "cases": [
+    {
+      "case_id": "evidence.axes.independent",
+      "purpose": "Primary provenance remains independent from named dependencies, support status, and execution coverage.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "accept",
+      "input": {
+        "check": "evidence_axes",
+        "source_primary_provenance": "ENGINE_ATTESTED",
+        "reported_primary_provenance": "ENGINE_ATTESTED",
+        "external_dependencies": ["oracle:resolution-v1"],
+        "support_status": "UNSUPPORTED",
+        "execution_coverage": "NONE"
+      }
+    },
+    {
+      "case_id": "evidence.axes.reject.dependency_promotion",
+      "purpose": "Naming a dependency does not promote an Engine-attested fact to profile-verified provenance.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "primary_provenance_changed",
+      "input": {
+        "check": "evidence_axes",
+        "source_primary_provenance": "ENGINE_ATTESTED",
+        "reported_primary_provenance": "PROFILE_VERIFIED",
+        "external_dependencies": ["oracle:resolution-v1"],
+        "support_status": "SUPPORTED",
+        "execution_coverage": "PARTIAL"
+      }
+    },
+    {
+      "case_id": "evidence.axes.reject.support_promotion",
+      "purpose": "Support status does not promote an offchain-derived fact to Core-verified provenance.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "primary_provenance_changed",
+      "input": {
+        "check": "evidence_axes",
+        "source_primary_provenance": "OFFCHAIN_DERIVED",
+        "reported_primary_provenance": "CORE_VERIFIED",
+        "external_dependencies": [],
+        "support_status": "SUPPORTED",
+        "execution_coverage": "CORE_ENFORCED"
+      }
+    },
+    {
+      "case_id": "evidence.core_verified.authenticated",
+      "purpose": "Core-verified provenance requires the exact Core identity, authenticated invocation context, and authenticated event schema.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "accept",
+      "input": {
+        "check": "core_verified_authenticity",
+        "primary_provenance": "CORE_VERIFIED",
+        "producer_kind": "CORE",
+        "expected_core_deployment_id": "core:deployment-1",
+        "actual_producer_id": "core:deployment-1",
+        "invocation_context_authenticated": true,
+        "event_schema_authenticated": true,
+        "copied_core_receipt_discriminator": false
+      }
+    },
+    {
+      "case_id": "evidence.core_verified.reject.wrong_core",
+      "purpose": "A valid Core-shaped record from another deployment is not evidence from the expected Core.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "core_identity_mismatch",
+      "input": {
+        "check": "core_verified_authenticity",
+        "primary_provenance": "CORE_VERIFIED",
+        "producer_kind": "CORE",
+        "expected_core_deployment_id": "core:deployment-1",
+        "actual_producer_id": "core:deployment-2",
+        "invocation_context_authenticated": true,
+        "event_schema_authenticated": true,
+        "copied_core_receipt_discriminator": false
+      }
+    },
+    {
+      "case_id": "evidence.core_verified.reject.unauthenticated_context",
+      "purpose": "A matching Core identity without an authenticated invocation context is insufficient.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "core_invocation_not_authenticated",
+      "input": {
+        "check": "core_verified_authenticity",
+        "primary_provenance": "CORE_VERIFIED",
+        "producer_kind": "CORE",
+        "expected_core_deployment_id": "core:deployment-1",
+        "actual_producer_id": "core:deployment-1",
+        "invocation_context_authenticated": false,
+        "event_schema_authenticated": true,
+        "copied_core_receipt_discriminator": false
+      }
+    },
+    {
+      "case_id": "evidence.core_verified.reject.unauthenticated_schema",
+      "purpose": "An unauthenticated event schema cannot carry Core-verified provenance.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "core_event_schema_not_authenticated",
+      "input": {
+        "check": "core_verified_authenticity",
+        "primary_provenance": "CORE_VERIFIED",
+        "producer_kind": "CORE",
+        "expected_core_deployment_id": "core:deployment-1",
+        "actual_producer_id": "core:deployment-1",
+        "invocation_context_authenticated": true,
+        "event_schema_authenticated": false,
+        "copied_core_receipt_discriminator": false
+      }
+    },
+    {
+      "case_id": "evidence.core_verified.reject.engine_impersonation",
+      "purpose": "An Engine cannot create a Core Receipt by copying its discriminator or event shape.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "engine_event_impersonates_core",
+      "input": {
+        "check": "core_verified_authenticity",
+        "primary_provenance": "CORE_VERIFIED",
+        "producer_kind": "ENGINE",
+        "expected_core_deployment_id": "core:deployment-1",
+        "actual_producer_id": "engine:malicious",
+        "invocation_context_authenticated": true,
+        "event_schema_authenticated": true,
+        "copied_core_receipt_discriminator": true
+      }
+    },
+    {
+      "case_id": "evidence.final_state.post_callback_checkpoint",
+      "purpose": "A post-callback checkpoint may establish final Engine-state evidence.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "accept",
+      "input": {
+        "check": "final_state",
+        "reported_final": true,
+        "later_untrusted_callback_reachable": true,
+        "post_callback_checkpoint": true,
+        "binding_proves_later_state_unreachable": false
+      }
+    },
+    {
+      "case_id": "evidence.final_state.binding_unreachability_proof",
+      "purpose": "A binding proof that no later call can reach the state may establish finality without another checkpoint.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "accept",
+      "input": {
+        "check": "final_state",
+        "reported_final": true,
+        "later_untrusted_callback_reachable": false,
+        "post_callback_checkpoint": false,
+        "binding_proves_later_state_unreachable": true
+      }
+    },
+    {
+      "case_id": "evidence.final_state.reject.pre_settlement",
+      "purpose": "A pre-settlement state is not final while a later untrusted callback can mutate it.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "final_state_checkpoint_missing",
+      "input": {
+        "check": "final_state",
+        "reported_final": true,
+        "later_untrusted_callback_reachable": true,
+        "post_callback_checkpoint": false,
+        "binding_proves_later_state_unreachable": false
+      }
+    },
+    {
+      "case_id": "evidence.receipt.atomic.complete",
+      "purpose": "An atomic normalized Receipt carries its identity inputs, exact committed relationships, evidence axes, assessment state, opaque Engine output, and plan commitment.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "accept",
+      "input": {
+        "check": "normalized_receipt",
+        "execution_profile": "ATOMIC_PLAN_V1",
+        "committed_context": {
+          "envelope_id": "envelope:atomic-1",
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "core_deployment_id": "core:deployment-1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:swap-1",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:alice-1",
+              "authorization_evidence_ref": "authorization:alice-1",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            }
+          ],
+          "liquidity_domain_revision_ids": ["domain-revision:alpha-v1"],
+          "protected_effect_occurrences": [
+            {
+              "effect_occurrence_id": "effect-occurrence:asset-move-1",
+              "effect_type_id": "programmable.effect.asset_move.v1",
+              "execution_target_id": "target:swap-1",
+              "authorization_scope_id": "scope:alice-1",
+              "commitment_position": {
+                "kind": "ATOMIC_PLAN_V1",
+                "effect_ordinal": "0"
+              },
+              "primary_provenance": "CORE_VERIFIED",
+              "external_dependencies": [],
+              "support_status": "SUPPORTED",
+              "execution_coverage": "CORE_ENFORCED",
+              "evidence_ref": "observation:asset-move-1"
+            }
+          ],
+          "applicable_assessment_group_keys": [
+            {
+              "core_deployment_id": "core:deployment-1",
+              "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+              "authorization_scope_id": "scope:alice-1",
+              "assessment_principal_id": "principal:alice",
+              "asset_profile_id": "asset-profile:exact-fungible-v1",
+              "native_asset_id": "asset:quote"
+            }
+          ],
+          "opaque_engine_output_commitments": [
+            {
+              "execution_target_id": "target:swap-1",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "evidence_ref": "engine-return:swap-1"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "ATOMIC_PLAN_V1",
+            "plan_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+          }
+        },
+        "receipt": {
+          "receipt_id": "receipt:atomic-1",
+          "receipt_identity_inputs": {
+            "envelope_id": "envelope:atomic-1",
+            "core_deployment_id": "core:deployment-1",
+            "execution_commitment_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            "ledger_evidence_ref": "ledger:transaction-1"
+          },
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "execution_profile": "ATOMIC_PLAN_V1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:swap-1",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:alice-1",
+              "authorization_evidence_ref": "authorization:alice-1",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            }
+          ],
+          "liquidity_domain_revision_ids": ["domain-revision:alpha-v1"],
+          "protected_effect_occurrences": [
+            {
+              "effect_occurrence_id": "effect-occurrence:asset-move-1",
+              "effect_type_id": "programmable.effect.asset_move.v1",
+              "execution_target_id": "target:swap-1",
+              "authorization_scope_id": "scope:alice-1",
+              "commitment_position": {
+                "kind": "ATOMIC_PLAN_V1",
+                "effect_ordinal": "0"
+              },
+              "primary_provenance": "CORE_VERIFIED",
+              "external_dependencies": [],
+              "support_status": "SUPPORTED",
+              "execution_coverage": "CORE_ENFORCED",
+              "evidence_ref": "observation:asset-move-1"
+            }
+          ],
+          "assessment_groups": [
+            {
+              "group_key": {
+                "core_deployment_id": "core:deployment-1",
+                "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+                "authorization_scope_id": "scope:alice-1",
+                "assessment_principal_id": "principal:alice",
+                "asset_profile_id": "asset-profile:exact-fungible-v1",
+                "native_asset_id": "asset:quote"
+              },
+              "applicable_debit_present": true,
+              "basis_before": "0",
+              "fill_basis": "2000",
+              "basis_after": "2000",
+              "assessment_before": "0",
+              "assessment_delta": "1",
+              "assessment_after": "1",
+              "remainder_before": "0",
+              "remainder_after": "0",
+              "gross_assessment_debit": "1",
+              "external_tax_withheld": "0",
+              "funded_credit": "1",
+              "liability_delta": "1"
+            }
+          ],
+          "opaque_engine_outputs": [
+            {
+              "execution_target_id": "target:swap-1",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "primary_provenance": "ENGINE_ATTESTED",
+              "external_dependencies": [],
+              "support_status": "SUPPORTED",
+              "execution_coverage": "CORE_ENFORCED",
+              "evidence_ref": "engine-return:swap-1"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "ATOMIC_PLAN_V1",
+            "plan_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+          }
+        }
+      }
+    },
+    {
+      "case_id": "evidence.receipt.reject.protected_effect_type_substitution",
+      "purpose": "A Receipt cannot change the committed protected Effect type while retaining the same occurrence identity and valid references.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "receipt_protected_effect_relationship_mismatch",
+      "input": {
+        "check": "normalized_receipt",
+        "execution_profile": "ATOMIC_PLAN_V1",
+        "committed_context": {
+          "envelope_id": "envelope:effect-type-substitution",
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "core_deployment_id": "core:deployment-1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:effect-type",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:effect-type",
+              "authorization_evidence_ref": "authorization:effect-type",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            }
+          ],
+          "liquidity_domain_revision_ids": ["domain-revision:alpha-v1"],
+          "protected_effect_occurrences": [
+            {
+              "effect_occurrence_id": "effect-occurrence:type-check",
+              "effect_type_id": "programmable.effect.asset_move.v1",
+              "execution_target_id": "target:effect-type",
+              "authorization_scope_id": "scope:effect-type",
+              "commitment_position": {
+                "kind": "ATOMIC_PLAN_V1",
+                "effect_ordinal": "0"
+              },
+              "primary_provenance": "CORE_VERIFIED",
+              "external_dependencies": [],
+              "support_status": "SUPPORTED",
+              "execution_coverage": "CORE_ENFORCED",
+              "evidence_ref": "observation:type-check"
+            }
+          ],
+          "applicable_assessment_group_keys": [],
+          "opaque_engine_output_commitments": [
+            {
+              "execution_target_id": "target:effect-type",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "evidence_ref": "engine-return:type-check"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "ATOMIC_PLAN_V1",
+            "plan_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+          }
+        },
+        "receipt": {
+          "receipt_id": "receipt:effect-type-substitution",
+          "receipt_identity_inputs": {
+            "envelope_id": "envelope:effect-type-substitution",
+            "core_deployment_id": "core:deployment-1",
+            "execution_commitment_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            "ledger_evidence_ref": "ledger:effect-type-substitution"
+          },
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "execution_profile": "ATOMIC_PLAN_V1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:effect-type",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:effect-type",
+              "authorization_evidence_ref": "authorization:effect-type",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            }
+          ],
+          "liquidity_domain_revision_ids": ["domain-revision:alpha-v1"],
+          "protected_effect_occurrences": [
+            {
+              "effect_occurrence_id": "effect-occurrence:type-check",
+              "effect_type_id": "programmable.effect.profile_operation.v1",
+              "execution_target_id": "target:effect-type",
+              "authorization_scope_id": "scope:effect-type",
+              "commitment_position": {
+                "kind": "ATOMIC_PLAN_V1",
+                "effect_ordinal": "0"
+              },
+              "primary_provenance": "CORE_VERIFIED",
+              "external_dependencies": [],
+              "support_status": "SUPPORTED",
+              "execution_coverage": "CORE_ENFORCED",
+              "evidence_ref": "observation:type-check"
+            }
+          ],
+          "assessment_groups": [],
+          "opaque_engine_outputs": [
+            {
+              "execution_target_id": "target:effect-type",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "primary_provenance": "ENGINE_ATTESTED",
+              "external_dependencies": [],
+              "support_status": "SUPPORTED",
+              "execution_coverage": "CORE_ENFORCED",
+              "evidence_ref": "engine-return:type-check"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "ATOMIC_PLAN_V1",
+            "plan_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+          }
+        }
+      }
+    },
+    {
+      "case_id": "evidence.receipt.reject.protected_effect_reassociation",
+      "purpose": "A Receipt cannot re-associate a protected Effect with other valid Targets, Scopes, positions, dependencies, or evidence references.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "receipt_protected_effect_relationship_mismatch",
+      "input": {
+        "check": "normalized_receipt",
+        "execution_profile": "ATOMIC_PLAN_V1",
+        "committed_context": {
+          "envelope_id": "envelope:effect-reassociation",
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "core_deployment_id": "core:deployment-1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:effect-alpha",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            },
+            {
+              "execution_target_id": "target:effect-beta",
+              "market_id": "market:beta",
+              "engine_revision_id": "engine-revision:beta-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:effect-alpha",
+              "authorization_evidence_ref": "authorization:effect-alpha",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            },
+            {
+              "principal_id": "principal:bob",
+              "authorization_scope_id": "scope:effect-beta",
+              "authorization_evidence_ref": "authorization:effect-beta",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            }
+          ],
+          "liquidity_domain_revision_ids": [
+            "domain-revision:alpha-v1",
+            "domain-revision:beta-v1"
+          ],
+          "protected_effect_occurrences": [
+            {
+              "effect_occurrence_id": "effect-occurrence:relationship-check",
+              "effect_type_id": "programmable.effect.asset_move.v1",
+              "execution_target_id": "target:effect-alpha",
+              "authorization_scope_id": "scope:effect-alpha",
+              "commitment_position": {
+                "kind": "ATOMIC_PLAN_V1",
+                "effect_ordinal": "0"
+              },
+              "primary_provenance": "CORE_VERIFIED",
+              "external_dependencies": [],
+              "support_status": "SUPPORTED",
+              "execution_coverage": "CORE_ENFORCED",
+              "evidence_ref": "observation:relationship-original"
+            }
+          ],
+          "applicable_assessment_group_keys": [],
+          "opaque_engine_output_commitments": [
+            {
+              "execution_target_id": "target:effect-alpha",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "evidence_ref": "engine-return:relationship-check"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "ATOMIC_PLAN_V1",
+            "plan_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+          }
+        },
+        "receipt": {
+          "receipt_id": "receipt:effect-reassociation",
+          "receipt_identity_inputs": {
+            "envelope_id": "envelope:effect-reassociation",
+            "core_deployment_id": "core:deployment-1",
+            "execution_commitment_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            "ledger_evidence_ref": "ledger:effect-reassociation"
+          },
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "execution_profile": "ATOMIC_PLAN_V1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:effect-alpha",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            },
+            {
+              "execution_target_id": "target:effect-beta",
+              "market_id": "market:beta",
+              "engine_revision_id": "engine-revision:beta-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:effect-alpha",
+              "authorization_evidence_ref": "authorization:effect-alpha",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            },
+            {
+              "principal_id": "principal:bob",
+              "authorization_scope_id": "scope:effect-beta",
+              "authorization_evidence_ref": "authorization:effect-beta",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            }
+          ],
+          "liquidity_domain_revision_ids": [
+            "domain-revision:alpha-v1",
+            "domain-revision:beta-v1"
+          ],
+          "protected_effect_occurrences": [
+            {
+              "effect_occurrence_id": "effect-occurrence:relationship-check",
+              "effect_type_id": "programmable.effect.asset_move.v1",
+              "execution_target_id": "target:effect-beta",
+              "authorization_scope_id": "scope:effect-beta",
+              "commitment_position": {
+                "kind": "ATOMIC_PLAN_V1",
+                "effect_ordinal": "1"
+              },
+              "primary_provenance": "CORE_VERIFIED",
+              "external_dependencies": ["dependency:uncommitted"],
+              "support_status": "SUPPORTED",
+              "execution_coverage": "CORE_ENFORCED",
+              "evidence_ref": "observation:relationship-substituted"
+            }
+          ],
+          "assessment_groups": [],
+          "opaque_engine_outputs": [
+            {
+              "execution_target_id": "target:effect-alpha",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "primary_provenance": "ENGINE_ATTESTED",
+              "external_dependencies": [],
+              "support_status": "SUPPORTED",
+              "execution_coverage": "CORE_ENFORCED",
+              "evidence_ref": "engine-return:relationship-check"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "ATOMIC_PLAN_V1",
+            "plan_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+          }
+        }
+      }
+    },
+    {
+      "case_id": "evidence.receipt.bounded.complete",
+      "purpose": "A bounded-session normalized Receipt carries every ordered segment commitment and the final zero-obligation checkpoint in addition to the common portable fields.",
+      "required_profiles": ["portable-core-v1", "bounded-session-v1"],
+      "expected_status": "accept",
+      "input": {
+        "check": "normalized_receipt",
+        "execution_profile": "BOUNDED_SESSION_V1",
+        "committed_context": {
+          "envelope_id": "envelope:session-1",
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "core_deployment_id": "core:deployment-1",
+          "execution_coverage": "NONE",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:session-1",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:alice-session-1",
+              "authorization_evidence_ref": "authorization:alice-session-1",
+              "replay_mode": "STORED",
+              "replay_state": "OPEN",
+              "fill_sequence": "1"
+            }
+          ],
+          "liquidity_domain_revision_ids": ["domain-revision:alpha-v1"],
+          "protected_effect_occurrences": [],
+          "applicable_assessment_group_keys": [],
+          "opaque_engine_output_commitments": [
+            {
+              "execution_target_id": "target:session-1",
+              "output_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "evidence_ref": "engine-return:session-1"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "BOUNDED_SESSION_V1",
+            "session_id": "session:session-1",
+            "final_transcript_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+            "segment_commitments": [
+              {
+                "segment_ordinal": "0",
+                "proposed_effects_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+                "realized_observations_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+              },
+              {
+                "segment_ordinal": "1",
+                "proposed_effects_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+                "realized_observations_digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666"
+              }
+            ],
+            "final_zero_obligation_checkpoint": {
+              "checkpoint_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+              "obligation_state_digest": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+              "remaining_obligation_count": "0",
+              "all_obligations_zero": true
+            }
+          }
+        },
+        "receipt": {
+          "receipt_id": "receipt:session-1",
+          "receipt_identity_inputs": {
+            "envelope_id": "envelope:session-1",
+            "core_deployment_id": "core:deployment-1",
+            "execution_commitment_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+            "ledger_evidence_ref": "ledger:transaction-2"
+          },
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "execution_profile": "BOUNDED_SESSION_V1",
+          "execution_coverage": "NONE",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:session-1",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:alice-session-1",
+              "authorization_evidence_ref": "authorization:alice-session-1",
+              "replay_mode": "STORED",
+              "replay_state": "OPEN",
+              "fill_sequence": "1"
+            }
+          ],
+          "liquidity_domain_revision_ids": ["domain-revision:alpha-v1"],
+          "protected_effect_occurrences": [],
+          "assessment_groups": [],
+          "opaque_engine_outputs": [
+            {
+              "execution_target_id": "target:session-1",
+              "output_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "primary_provenance": "ENGINE_ATTESTED",
+              "external_dependencies": ["sequencer:example-l2"],
+              "support_status": "UNSUPPORTED",
+              "execution_coverage": "NONE",
+              "evidence_ref": "engine-return:session-1"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "BOUNDED_SESSION_V1",
+            "session_id": "session:session-1",
+            "final_transcript_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+            "segment_commitments": [
+              {
+                "segment_ordinal": "0",
+                "proposed_effects_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+                "realized_observations_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+              },
+              {
+                "segment_ordinal": "1",
+                "proposed_effects_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+                "realized_observations_digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666"
+              }
+            ],
+            "final_zero_obligation_checkpoint": {
+              "checkpoint_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+              "obligation_state_digest": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+              "remaining_obligation_count": "0",
+              "all_obligations_zero": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "case_id": "evidence.receipt.reject.committed_target_omitted",
+      "purpose": "A schema-complete Receipt is incomplete when it omits one committed Execution Target from the ordered target tuple.",
+      "required_profiles": [
+        "portable-core-v1"
+      ],
+      "expected_status": "reject",
+      "reject_code": "receipt_execution_target_coverage_mismatch",
+      "input": {
+        "check": "normalized_receipt",
+        "execution_profile": "ATOMIC_PLAN_V1",
+        "committed_context": {
+          "envelope_id": "envelope:relationship-check",
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "core_deployment_id": "core:deployment-1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:swap-1",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            },
+            {
+              "execution_target_id": "target:swap-2",
+              "market_id": "market:beta",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:alice-1",
+              "authorization_evidence_ref": "authorization:alice-1",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            }
+          ],
+          "liquidity_domain_revision_ids": [
+            "domain-revision:alpha-v1"
+          ],
+          "protected_effect_occurrences": [],
+          "applicable_assessment_group_keys": [],
+          "opaque_engine_output_commitments": [
+            {
+              "execution_target_id": "target:swap-1",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "evidence_ref": "engine-return:relationship-check"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "ATOMIC_PLAN_V1",
+            "plan_digest": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+          }
+        },
+        "receipt": {
+          "receipt_id": "receipt:relationship-check",
+          "receipt_identity_inputs": {
+            "envelope_id": "envelope:relationship-check",
+            "core_deployment_id": "core:deployment-1",
+            "execution_commitment_digest": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+            "ledger_evidence_ref": "ledger:relationship-check"
+          },
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "execution_profile": "ATOMIC_PLAN_V1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:swap-1",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:alice-1",
+              "authorization_evidence_ref": "authorization:alice-1",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            }
+          ],
+          "liquidity_domain_revision_ids": [
+            "domain-revision:alpha-v1"
+          ],
+          "protected_effect_occurrences": [],
+          "assessment_groups": [],
+          "opaque_engine_outputs": [
+            {
+              "execution_target_id": "target:swap-1",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "primary_provenance": "ENGINE_ATTESTED",
+              "external_dependencies": [],
+              "support_status": "SUPPORTED",
+              "execution_coverage": "CORE_ENFORCED",
+              "evidence_ref": "engine-return:relationship-check"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "ATOMIC_PLAN_V1",
+            "plan_digest": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+          }
+        }
+      }
+    },
+    {
+      "case_id": "evidence.receipt.reject.market_mismatch",
+      "purpose": "A Receipt cannot associate a committed Execution Target with a different Market.",
+      "required_profiles": [
+        "portable-core-v1"
+      ],
+      "expected_status": "reject",
+      "reject_code": "receipt_market_id_mismatch",
+      "input": {
+        "check": "normalized_receipt",
+        "execution_profile": "ATOMIC_PLAN_V1",
+        "committed_context": {
+          "envelope_id": "envelope:relationship-check",
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "core_deployment_id": "core:deployment-1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:swap-1",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:alice-1",
+              "authorization_evidence_ref": "authorization:alice-1",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            }
+          ],
+          "liquidity_domain_revision_ids": [
+            "domain-revision:alpha-v1"
+          ],
+          "protected_effect_occurrences": [],
+          "applicable_assessment_group_keys": [],
+          "opaque_engine_output_commitments": [
+            {
+              "execution_target_id": "target:swap-1",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "evidence_ref": "engine-return:relationship-check"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "ATOMIC_PLAN_V1",
+            "plan_digest": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+          }
+        },
+        "receipt": {
+          "receipt_id": "receipt:relationship-check",
+          "receipt_identity_inputs": {
+            "envelope_id": "envelope:relationship-check",
+            "core_deployment_id": "core:deployment-1",
+            "execution_commitment_digest": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+            "ledger_evidence_ref": "ledger:relationship-check"
+          },
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "execution_profile": "ATOMIC_PLAN_V1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:swap-1",
+              "market_id": "market:beta",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:alice-1",
+              "authorization_evidence_ref": "authorization:alice-1",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            }
+          ],
+          "liquidity_domain_revision_ids": [
+            "domain-revision:alpha-v1"
+          ],
+          "protected_effect_occurrences": [],
+          "assessment_groups": [],
+          "opaque_engine_outputs": [
+            {
+              "execution_target_id": "target:swap-1",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "primary_provenance": "ENGINE_ATTESTED",
+              "external_dependencies": [],
+              "support_status": "SUPPORTED",
+              "execution_coverage": "CORE_ENFORCED",
+              "evidence_ref": "engine-return:relationship-check"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "ATOMIC_PLAN_V1",
+            "plan_digest": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+          }
+        }
+      }
+    },
+    {
+      "case_id": "evidence.receipt.reject.scope_fill_mismatch",
+      "purpose": "A Receipt cannot substitute a Principal Scope or report a different committed fill sequence.",
+      "required_profiles": [
+        "portable-core-v1"
+      ],
+      "expected_status": "reject",
+      "reject_code": "receipt_principal_authorization_state_mismatch",
+      "input": {
+        "check": "normalized_receipt",
+        "execution_profile": "ATOMIC_PLAN_V1",
+        "committed_context": {
+          "envelope_id": "envelope:relationship-check",
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "core_deployment_id": "core:deployment-1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:swap-1",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:alice-1",
+              "authorization_evidence_ref": "authorization:alice-1",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            }
+          ],
+          "liquidity_domain_revision_ids": [
+            "domain-revision:alpha-v1"
+          ],
+          "protected_effect_occurrences": [],
+          "applicable_assessment_group_keys": [],
+          "opaque_engine_output_commitments": [
+            {
+              "execution_target_id": "target:swap-1",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "evidence_ref": "engine-return:relationship-check"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "ATOMIC_PLAN_V1",
+            "plan_digest": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+          }
+        },
+        "receipt": {
+          "receipt_id": "receipt:relationship-check",
+          "receipt_identity_inputs": {
+            "envelope_id": "envelope:relationship-check",
+            "core_deployment_id": "core:deployment-1",
+            "execution_commitment_digest": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+            "ledger_evidence_ref": "ledger:relationship-check"
+          },
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "execution_profile": "ATOMIC_PLAN_V1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:swap-1",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:alice-substituted",
+              "authorization_evidence_ref": "authorization:alice-1",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "1"
+            }
+          ],
+          "liquidity_domain_revision_ids": [
+            "domain-revision:alpha-v1"
+          ],
+          "protected_effect_occurrences": [],
+          "assessment_groups": [],
+          "opaque_engine_outputs": [
+            {
+              "execution_target_id": "target:swap-1",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "primary_provenance": "ENGINE_ATTESTED",
+              "external_dependencies": [],
+              "support_status": "SUPPORTED",
+              "execution_coverage": "CORE_ENFORCED",
+              "evidence_ref": "engine-return:relationship-check"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "ATOMIC_PLAN_V1",
+            "plan_digest": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+          }
+        }
+      }
+    },
+    {
+      "case_id": "evidence.receipt.reject.applicable_assessment_omitted",
+      "purpose": "A schema-complete Receipt must contain the full record for every applicable Protocol Assessment group, including a zero-valued group.",
+      "required_profiles": [
+        "portable-core-v1"
+      ],
+      "expected_status": "reject",
+      "reject_code": "receipt_assessment_group_coverage_mismatch",
+      "input": {
+        "check": "normalized_receipt",
+        "execution_profile": "ATOMIC_PLAN_V1",
+        "committed_context": {
+          "envelope_id": "envelope:relationship-check",
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "core_deployment_id": "core:deployment-1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:swap-1",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:alice-1",
+              "authorization_evidence_ref": "authorization:alice-1",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            }
+          ],
+          "liquidity_domain_revision_ids": [
+            "domain-revision:alpha-v1"
+          ],
+          "protected_effect_occurrences": [],
+          "applicable_assessment_group_keys": [
+            {
+              "core_deployment_id": "core:deployment-1",
+              "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+              "authorization_scope_id": "scope:alice-1",
+              "assessment_principal_id": "principal:alice",
+              "asset_profile_id": "asset-profile:exact-fungible-v1",
+              "native_asset_id": "asset:quote"
+            }
+          ],
+          "opaque_engine_output_commitments": [
+            {
+              "execution_target_id": "target:swap-1",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "evidence_ref": "engine-return:relationship-check"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "ATOMIC_PLAN_V1",
+            "plan_digest": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+          }
+        },
+        "receipt": {
+          "receipt_id": "receipt:relationship-check",
+          "receipt_identity_inputs": {
+            "envelope_id": "envelope:relationship-check",
+            "core_deployment_id": "core:deployment-1",
+            "execution_commitment_digest": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+            "ledger_evidence_ref": "ledger:relationship-check"
+          },
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "execution_profile": "ATOMIC_PLAN_V1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:swap-1",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:alice-1",
+              "authorization_evidence_ref": "authorization:alice-1",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            }
+          ],
+          "liquidity_domain_revision_ids": [
+            "domain-revision:alpha-v1"
+          ],
+          "protected_effect_occurrences": [],
+          "assessment_groups": [],
+          "opaque_engine_outputs": [
+            {
+              "execution_target_id": "target:swap-1",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "primary_provenance": "ENGINE_ATTESTED",
+              "external_dependencies": [],
+              "support_status": "SUPPORTED",
+              "execution_coverage": "CORE_ENFORCED",
+              "evidence_ref": "engine-return:relationship-check"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "ATOMIC_PLAN_V1",
+            "plan_digest": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+          }
+        }
+      }
+    },
+    {
+      "case_id": "evidence.receipt.reject.final_checkpoint_mismatch",
+      "purpose": "A bounded-session Receipt cannot substitute a different final zero-obligation checkpoint while retaining the committed transcript identity.",
+      "required_profiles": [
+        "portable-core-v1",
+        "bounded-session-v1"
+      ],
+      "expected_status": "reject",
+      "reject_code": "receipt_final_checkpoint_mismatch",
+      "input": {
+        "check": "normalized_receipt",
+        "execution_profile": "BOUNDED_SESSION_V1",
+        "committed_context": {
+          "envelope_id": "envelope:checkpoint-check",
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "core_deployment_id": "core:deployment-1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:swap-1",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:alice-1",
+              "authorization_evidence_ref": "authorization:alice-1",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            }
+          ],
+          "liquidity_domain_revision_ids": [
+            "domain-revision:alpha-v1"
+          ],
+          "protected_effect_occurrences": [],
+          "applicable_assessment_group_keys": [],
+          "opaque_engine_output_commitments": [
+            {
+              "execution_target_id": "target:swap-1",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "evidence_ref": "engine-return:relationship-check"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "BOUNDED_SESSION_V1",
+            "session_id": "session:checkpoint-check",
+            "final_transcript_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "segment_commitments": [
+              {
+                "segment_ordinal": "0",
+                "proposed_effects_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                "realized_observations_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+              }
+            ],
+            "final_zero_obligation_checkpoint": {
+              "checkpoint_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+              "obligation_state_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+              "remaining_obligation_count": "0",
+              "all_obligations_zero": true
+            }
+          }
+        },
+        "receipt": {
+          "receipt_id": "receipt:checkpoint-check",
+          "receipt_identity_inputs": {
+            "envelope_id": "envelope:checkpoint-check",
+            "core_deployment_id": "core:deployment-1",
+            "execution_commitment_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "ledger_evidence_ref": "ledger:relationship-check"
+          },
+          "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+          "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+          "execution_profile": "BOUNDED_SESSION_V1",
+          "execution_coverage": "CORE_ENFORCED",
+          "execution_targets": [
+            {
+              "execution_target_id": "target:swap-1",
+              "market_id": "market:alpha",
+              "engine_revision_id": "engine-revision:alpha-v1"
+            }
+          ],
+          "principal_authorization_states": [
+            {
+              "principal_id": "principal:alice",
+              "authorization_scope_id": "scope:alice-1",
+              "authorization_evidence_ref": "authorization:alice-1",
+              "replay_mode": "ONE_SHOT",
+              "replay_state": "CONSUMED",
+              "fill_sequence": "0"
+            }
+          ],
+          "liquidity_domain_revision_ids": [
+            "domain-revision:alpha-v1"
+          ],
+          "protected_effect_occurrences": [],
+          "assessment_groups": [],
+          "opaque_engine_outputs": [
+            {
+              "execution_target_id": "target:swap-1",
+              "output_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "primary_provenance": "ENGINE_ATTESTED",
+              "external_dependencies": [],
+              "support_status": "SUPPORTED",
+              "execution_coverage": "CORE_ENFORCED",
+              "evidence_ref": "engine-return:relationship-check"
+            }
+          ],
+          "execution_commitment": {
+            "kind": "BOUNDED_SESSION_V1",
+            "session_id": "session:checkpoint-check",
+            "final_transcript_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "segment_commitments": [
+              {
+                "segment_ordinal": "0",
+                "proposed_effects_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                "realized_observations_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+              }
+            ],
+            "final_zero_obligation_checkpoint": {
+              "checkpoint_digest": "sha256:abababababababababababababababababababababababababababababababab",
+              "obligation_state_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+              "remaining_obligation_count": "0",
+              "all_obligations_zero": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "case_id": "evidence.assessment.zero_record",
+      "purpose": "An applicable debit that floors to zero still produces a keyed zero-valued assessment record.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "accept",
+      "input": {
+        "check": "assessment_receipt",
+        "applicable_debit_present": true,
+        "assessment_record_present": true,
+        "assessment_group_key": "assessment-group:alice-quote",
+        "assessment_amount": "0"
+      }
+    },
+    {
+      "case_id": "evidence.assessment.absent_group",
+      "purpose": "When no applicable debit exists, the assessment group and its record are absent.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "accept",
+      "input": {
+        "check": "assessment_receipt",
+        "applicable_debit_present": false,
+        "assessment_record_present": false
+      }
+    },
+    {
+      "case_id": "evidence.assessment.reject.zero_omitted",
+      "purpose": "Omitting the record for an applicable zero-valued assessment loses the distinction from an absent group.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "applicable_assessment_record_missing",
+      "input": {
+        "check": "assessment_receipt",
+        "applicable_debit_present": true,
+        "assessment_record_present": false
+      }
+    },
+    {
+      "case_id": "evidence.assessment.reject.spurious_group",
+      "purpose": "A Receipt cannot emit an assessment group when no applicable debit exists.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "absent_assessment_group_has_record",
+      "input": {
+        "check": "assessment_receipt",
+        "applicable_debit_present": false,
+        "assessment_record_present": true,
+        "assessment_group_key": "assessment-group:alice-quote",
+        "assessment_amount": "0"
+      }
+    },
+    {
+      "case_id": "evidence.session.ordered_zero_checkpoint",
+      "purpose": "A bounded-session Receipt preserves exact segment order, the final transcript digest, and zero remaining obligations.",
+      "required_profiles": ["portable-core-v1", "bounded-session-v1"],
+      "expected_status": "accept",
+      "input": {
+        "check": "bounded_session_receipt",
+        "executed_segment_ordinals": ["0", "1", "2"],
+        "receipt_segment_ordinals": ["0", "1", "2"],
+        "computed_final_transcript_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "receipt_final_transcript_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "final_obligations": [
+          {
+            "obligation_key_id": "obligation:asset-return-1",
+            "remaining_amount": "0"
+          }
+        ],
+        "final_checkpoint_present": true
+      }
+    },
+    {
+      "case_id": "evidence.session.reject.reordered_transcript",
+      "purpose": "Reordering otherwise identical segments invalidates bounded-session receipt reconstruction.",
+      "required_profiles": ["portable-core-v1", "bounded-session-v1"],
+      "expected_status": "reject",
+      "reject_code": "session_transcript_order_mismatch",
+      "input": {
+        "check": "bounded_session_receipt",
+        "executed_segment_ordinals": ["0", "1", "2"],
+        "receipt_segment_ordinals": ["0", "2", "1"],
+        "computed_final_transcript_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "receipt_final_transcript_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "final_obligations": [],
+        "final_checkpoint_present": true
+      }
+    },
+    {
+      "case_id": "evidence.session.reject.transcript_digest",
+      "purpose": "The Receipt final transcript digest must match the digest computed from the ordered transcript.",
+      "required_profiles": ["portable-core-v1", "bounded-session-v1"],
+      "expected_status": "reject",
+      "reject_code": "session_transcript_digest_mismatch",
+      "input": {
+        "check": "bounded_session_receipt",
+        "executed_segment_ordinals": ["0", "1"],
+        "receipt_segment_ordinals": ["0", "1"],
+        "computed_final_transcript_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "receipt_final_transcript_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "final_obligations": [],
+        "final_checkpoint_present": true
+      }
+    },
+    {
+      "case_id": "evidence.session.reject.nonzero_obligation",
+      "purpose": "A bounded session cannot commit while any temporary obligation remains nonzero.",
+      "required_profiles": ["portable-core-v1", "bounded-session-v1"],
+      "expected_status": "reject",
+      "reject_code": "session_final_obligation_nonzero",
+      "input": {
+        "check": "bounded_session_receipt",
+        "executed_segment_ordinals": ["0", "1"],
+        "receipt_segment_ordinals": ["0", "1"],
+        "computed_final_transcript_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "receipt_final_transcript_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "final_obligations": [
+          {
+            "obligation_key_id": "obligation:asset-return-1",
+            "remaining_amount": "1"
+          }
+        ],
+        "final_checkpoint_present": true
+      }
+    },
+    {
+      "case_id": "evidence.session.reject.missing_final_checkpoint",
+      "purpose": "A bounded-session Receipt must contain its final zero-obligation checkpoint.",
+      "required_profiles": ["portable-core-v1", "bounded-session-v1"],
+      "expected_status": "reject",
+      "reject_code": "session_final_checkpoint_missing",
+      "input": {
+        "check": "bounded_session_receipt",
+        "executed_segment_ordinals": ["0", "1"],
+        "receipt_segment_ordinals": ["0", "1"],
+        "computed_final_transcript_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "receipt_final_transcript_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "final_obligations": [],
+        "final_checkpoint_present": false
+      }
+    },
+    {
+      "case_id": "evidence.valuation.complete",
+      "purpose": "An offchain valuation names source assets and profiles, price source, observation time, and method without changing assessment state.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "accept",
+      "input": {
+        "check": "offchain_valuation",
+        "primary_provenance": "OFFCHAIN_DERIVED",
+        "source_assets": [
+          {
+            "asset_profile_id": "asset-profile:exact-fungible-v1",
+            "native_asset_id": "asset:quote"
+          }
+        ],
+        "price_source_id": "price-source:oracle-snapshot-1",
+        "observation_time": "2026-08-29T12:00:00Z",
+        "method": "Multiply the observed atomic-unit amount by the pinned price snapshot and decimal scale.",
+        "onchain_assessment_state_changed": false
+      }
+    },
+    {
+      "case_id": "evidence.valuation.reject.provenance",
+      "purpose": "An offchain valuation cannot be labeled as Core-verified evidence.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "valuation_provenance_invalid",
+      "input": {
+        "check": "offchain_valuation",
+        "primary_provenance": "CORE_VERIFIED",
+        "source_assets": [
+          {
+            "asset_profile_id": "asset-profile:exact-fungible-v1",
+            "native_asset_id": "asset:quote"
+          }
+        ],
+        "price_source_id": "price-source:oracle-snapshot-1",
+        "observation_time": "2026-08-29T12:00:00Z",
+        "method": "Multiply the observed atomic-unit amount by the pinned price snapshot and decimal scale.",
+        "onchain_assessment_state_changed": false
+      }
+    },
+    {
+      "case_id": "evidence.valuation.reject.source_assets",
+      "purpose": "An offchain valuation must name at least one source asset and exact Asset Profile.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "valuation_source_assets_missing",
+      "input": {
+        "check": "offchain_valuation",
+        "primary_provenance": "OFFCHAIN_DERIVED",
+        "source_assets": [],
+        "price_source_id": "price-source:oracle-snapshot-1",
+        "observation_time": "2026-08-29T12:00:00Z",
+        "method": "Multiply the observed atomic-unit amount by the pinned price snapshot and decimal scale.",
+        "onchain_assessment_state_changed": false
+      }
+    },
+    {
+      "case_id": "evidence.valuation.reject.price_source",
+      "purpose": "An offchain valuation must name its price source.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "valuation_price_source_missing",
+      "input": {
+        "check": "offchain_valuation",
+        "primary_provenance": "OFFCHAIN_DERIVED",
+        "source_assets": [
+          {
+            "asset_profile_id": "asset-profile:exact-fungible-v1",
+            "native_asset_id": "asset:quote"
+          }
+        ],
+        "observation_time": "2026-08-29T12:00:00Z",
+        "method": "Multiply the observed atomic-unit amount by the pinned price snapshot and decimal scale.",
+        "onchain_assessment_state_changed": false
+      }
+    },
+    {
+      "case_id": "evidence.valuation.reject.observation_time",
+      "purpose": "An offchain valuation must name the observation time of its price input.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "valuation_observation_time_missing",
+      "input": {
+        "check": "offchain_valuation",
+        "primary_provenance": "OFFCHAIN_DERIVED",
+        "source_assets": [
+          {
+            "asset_profile_id": "asset-profile:exact-fungible-v1",
+            "native_asset_id": "asset:quote"
+          }
+        ],
+        "price_source_id": "price-source:oracle-snapshot-1",
+        "method": "Multiply the observed atomic-unit amount by the pinned price snapshot and decimal scale.",
+        "onchain_assessment_state_changed": false
+      }
+    },
+    {
+      "case_id": "evidence.valuation.reject.method",
+      "purpose": "An offchain valuation must disclose its valuation method.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "valuation_method_missing",
+      "input": {
+        "check": "offchain_valuation",
+        "primary_provenance": "OFFCHAIN_DERIVED",
+        "source_assets": [
+          {
+            "asset_profile_id": "asset-profile:exact-fungible-v1",
+            "native_asset_id": "asset:quote"
+          }
+        ],
+        "price_source_id": "price-source:oracle-snapshot-1",
+        "observation_time": "2026-08-29T12:00:00Z",
+        "onchain_assessment_state_changed": false
+      }
+    },
+    {
+      "case_id": "evidence.valuation.reject.assessment_mutation",
+      "purpose": "An offchain valuation cannot alter onchain Protocol Assessment state.",
+      "required_profiles": ["portable-core-v1"],
+      "expected_status": "reject",
+      "reject_code": "valuation_mutates_assessment_state",
+      "input": {
+        "check": "offchain_valuation",
+        "primary_provenance": "OFFCHAIN_DERIVED",
+        "source_assets": [
+          {
+            "asset_profile_id": "asset-profile:exact-fungible-v1",
+            "native_asset_id": "asset:quote"
+          }
+        ],
+        "price_source_id": "price-source:oracle-snapshot-1",
+        "observation_time": "2026-08-29T12:00:00Z",
+        "method": "Multiply the observed atomic-unit amount by the pinned price snapshot and decimal scale.",
+        "onchain_assessment_state_changed": true
+      }
+    }
+  ]
+}

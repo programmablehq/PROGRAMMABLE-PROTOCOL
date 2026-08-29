@@ -1,0 +1,757 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:programmable:schema:deployment-manifest:v1",
+  "title": "Programmable native deployment manifest V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "binding_release_digest",
+    "portable_profiles",
+    "portable_vector_set_digest",
+    "binding_native_profile_claims",
+    "asset_profile_claims",
+    "runtime_family",
+    "network",
+    "core",
+    "deployment",
+    "authority_evidence",
+    "classification",
+    "evidence_catalog",
+    "runtime_evidence"
+  ],
+  "properties": {
+    "$schema": {"const": "urn:programmable:schema:deployment-manifest:v1"},
+    "binding_release_digest": {"$ref": "#/$defs/digest"},
+    "portable_profiles": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/profile_id"},
+      "contains": {"const": "portable-core-v1"}
+    },
+    "portable_vector_set_digest": {"$ref": "#/$defs/digest"},
+    "binding_native_profile_claims": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/binding_native_profile_claim"}
+    },
+    "asset_profile_claims": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/asset_profile_claim"}
+    },
+    "runtime_family": {"enum": ["EVM", "SVM"]},
+    "network": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["namespace", "reference", "genesis_or_anchor", "evidence_refs"],
+      "properties": {
+        "namespace": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+        "reference": {"type": "string", "minLength": 1},
+        "genesis_or_anchor": {"type": "string", "minLength": 1},
+        "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      }
+    },
+    "core": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "native_id",
+        "core_major",
+        "constitution_id",
+        "protocol_collector_id",
+        "artifact_digest"
+      ],
+      "properties": {
+        "native_id": {"type": "string", "minLength": 1},
+        "core_major": {"$ref": "#/$defs/decimal"},
+        "constitution_id": {"$ref": "#/$defs/digest"},
+        "protocol_collector_id": {"type": "string", "minLength": 1},
+        "artifact_digest": {"$ref": "#/$defs/digest"},
+        "runtime_code_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["transaction_id", "ledger_position", "evidence_refs"],
+      "properties": {
+        "transaction_id": {"type": "string", "minLength": 1},
+        "ledger_position": {"type": "string", "minLength": 1},
+        "predecessor_native_id": {"type": "string", "minLength": 1},
+        "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      }
+    },
+    "authority_evidence": {"$ref": "#/$defs/core_authority_evidence"},
+    "classification": {
+      "description": "Production is a relational claim: the resolved Binding Release protocol_commit must select a final, production-eligible protocol-version.json. JSON Schema validates only this document's shape.",
+      "enum": ["example", "testnet_candidate", "production"]
+    },
+    "evidence_catalog": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/evidence_record"}
+    },
+    "runtime_evidence": {
+      "oneOf": [
+        {"$ref": "#/$defs/evm_runtime_evidence"},
+        {"$ref": "#/$defs/svm_runtime_evidence"}
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "type": "object",
+        "properties": {"runtime_family": {"const": "EVM"}},
+        "required": ["runtime_family"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "core": {
+            "type": "object",
+            "properties": {"runtime_code_digest": {}},
+            "required": ["runtime_code_digest"]
+          },
+          "runtime_evidence": {"$ref": "#/$defs/evm_runtime_evidence"}
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {"runtime_family": {"const": "SVM"}},
+        "required": ["runtime_family"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "core": {
+            "type": "object",
+            "properties": {"runtime_code_digest": {}},
+            "not": {
+              "properties": {"runtime_code_digest": {}},
+              "required": ["runtime_code_digest"]
+            }
+          },
+          "runtime_evidence": {"$ref": "#/$defs/svm_runtime_evidence"}
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {"classification": {"const": "production"}},
+        "required": ["classification"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "authority_evidence": {
+            "type": "object",
+            "properties": {
+              "code_replacement": {"$ref": "#/$defs/absent_authority_observation"},
+              "configuration_mutation": {"$ref": "#/$defs/absent_authority_observation"},
+              "assessment_mutation": {"$ref": "#/$defs/absent_authority_observation"},
+              "pause_or_quarantine": {"$ref": "#/$defs/absent_authority_observation"},
+              "sweep_or_redirection": {"$ref": "#/$defs/absent_authority_observation"},
+              "forced_migration": {"$ref": "#/$defs/absent_authority_observation"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "classification": {"const": "production"},
+          "runtime_family": {"const": "EVM"}
+        },
+        "required": ["classification", "runtime_family"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "runtime_evidence": {
+            "type": "object",
+            "properties": {"deployment_model": {"const": "direct"}}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "classification": {"const": "production"},
+          "runtime_family": {"const": "SVM"}
+        },
+        "required": ["classification", "runtime_family"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "runtime_evidence": {
+            "type": "object",
+            "properties": {
+              "loader": {
+                "type": "object",
+                "properties": {
+                  "upgrade_authority": {"$ref": "#/$defs/absent_authority_observation"},
+                  "close_authority": {"$ref": "#/$defs/absent_authority_observation"}
+                }
+              },
+              "immutable_state": {
+                "type": "object",
+                "if": {
+                  "type": "object",
+                  "properties": {"mode": {"const": "accounts"}},
+                  "required": ["mode"]
+                },
+                "then": {
+                  "type": "object",
+                  "properties": {
+                    "accounts": {
+                      "type": "array",
+                      "items": {
+                        "allOf": [
+                          {"$ref": "#/$defs/svm_state_account_evidence"},
+                          {
+                            "type": "object",
+                            "properties": {
+                              "mutation_authority": {
+                                "$ref": "#/$defs/absent_authority_observation"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "decimal": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "git_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "hex_bytes": {"type": "string", "pattern": "^0x(?:[0-9a-f]{2})*$"},
+    "hex32": {"type": "string", "pattern": "^0x[0-9a-f]{64}$"},
+    "evm_address": {"type": "string", "pattern": "^0x[0-9a-f]{40}$"},
+    "profile_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9][a-z0-9_-]*)+$"
+    },
+    "repository_path": {
+      "type": "string",
+      "pattern": "^(?!(?:\\.{1,2})(?:/|$))[A-Za-z0-9._-]+(?:/(?!(?:\\.{1,2})(?:/|$))[A-Za-z0-9._-]+)*$"
+    },
+    "native_conformance_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "native_vector_set_path",
+        "native_vector_set_digest",
+        "native_test_report_path",
+        "native_test_report_digest"
+      ],
+      "properties": {
+        "native_vector_set_path": {"$ref": "#/$defs/repository_path"},
+        "native_vector_set_digest": {"$ref": "#/$defs/digest"},
+        "native_test_report_path": {"$ref": "#/$defs/repository_path"},
+        "native_test_report_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "binding_native_profile_claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_type", "profile_id", "conformance"],
+      "properties": {
+        "claim_type": {"const": "binding_native"},
+        "profile_id": {"$ref": "#/$defs/profile_id"},
+        "conformance": {"$ref": "#/$defs/native_conformance_evidence"}
+      }
+    },
+    "asset_profile_claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_type", "asset_profile_id", "conformance"],
+      "properties": {
+        "claim_type": {"const": "asset_profile"},
+        "asset_profile_id": {"$ref": "#/$defs/profile_id"},
+        "conformance": {"$ref": "#/$defs/native_conformance_evidence"}
+      }
+    },
+    "evidence_id": {"type": "string", "pattern": "^evidence:[a-z0-9][a-z0-9._-]*$"},
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/evidence_id"}
+    },
+    "evidence_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "kind", "locator", "digest", "observed_at"],
+      "properties": {
+        "evidence_id": {"$ref": "#/$defs/evidence_id"},
+        "kind": {
+          "enum": [
+            "ledger_state",
+            "deployment_transaction",
+            "runtime_query",
+            "source_artifact",
+            "reproducible_build",
+            "explorer_verification",
+            "independent_attestation",
+            "other"
+          ]
+        },
+        "locator": {"type": "string", "minLength": 1},
+        "digest": {"$ref": "#/$defs/digest"},
+        "observed_at": {"type": "string", "minLength": 1}
+      }
+    },
+    "authority_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["conclusion", "evidence_refs"],
+      "properties": {
+        "conclusion": {"enum": ["absent", "present", "not_assessed"]},
+        "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      }
+    },
+    "absent_authority_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["conclusion", "evidence_refs"],
+      "properties": {
+        "conclusion": {"const": "absent"},
+        "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      }
+    },
+    "core_authority_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code_replacement",
+        "configuration_mutation",
+        "assessment_mutation",
+        "pause_or_quarantine",
+        "sweep_or_redirection",
+        "forced_migration"
+      ],
+      "properties": {
+        "code_replacement": {"$ref": "#/$defs/authority_observation"},
+        "configuration_mutation": {"$ref": "#/$defs/authority_observation"},
+        "assessment_mutation": {"$ref": "#/$defs/authority_observation"},
+        "pause_or_quarantine": {"$ref": "#/$defs/authority_observation"},
+        "sweep_or_redirection": {"$ref": "#/$defs/authority_observation"},
+        "forced_migration": {"$ref": "#/$defs/authority_observation"}
+      }
+    },
+    "compiler_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "settings_digest"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "settings_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "evm_initialization_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["creation_input", "constructor_arguments", "evidence_refs"],
+      "properties": {
+        "creation_input": {"$ref": "#/$defs/hex_bytes"},
+        "constructor_arguments": {"$ref": "#/$defs/hex_bytes"},
+        "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      }
+    },
+    "evm_creation_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mechanism",
+        "creator_native_id",
+        "salt",
+        "init_code_digest",
+        "derived_native_id",
+        "evidence_refs"
+      ],
+      "properties": {
+        "mechanism": {"enum": ["CREATE", "CREATE2"]},
+        "creator_native_id": {"$ref": "#/$defs/evm_address"},
+        "salt": {
+          "oneOf": [
+            {"$ref": "#/$defs/hex32"},
+            {"type": "null"}
+          ]
+        },
+        "init_code_digest": {"$ref": "#/$defs/digest"},
+        "derived_native_id": {"$ref": "#/$defs/evm_address"},
+        "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"mechanism": {"const": "CREATE"}},
+            "required": ["mechanism"]
+          },
+          "then": {
+            "properties": {"salt": {"type": "null"}}
+          },
+          "else": {
+            "properties": {"salt": {"$ref": "#/$defs/hex32"}}
+          }
+        }
+      ]
+    },
+    "evm_artifact_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_commit",
+        "compiler",
+        "creation_bytecode_digest",
+        "init_code_digest",
+        "runtime_bytecode_digest",
+        "abi_digest",
+        "source_evidence_refs",
+        "reproducible_build_evidence_refs",
+        "live_code_evidence_refs"
+      ],
+      "properties": {
+        "source_commit": {"$ref": "#/$defs/git_commit"},
+        "compiler": {"$ref": "#/$defs/compiler_evidence"},
+        "creation_bytecode_digest": {"$ref": "#/$defs/digest"},
+        "init_code_digest": {"$ref": "#/$defs/digest"},
+        "runtime_bytecode_digest": {"$ref": "#/$defs/digest"},
+        "abi_digest": {"$ref": "#/$defs/digest"},
+        "source_evidence_refs": {"$ref": "#/$defs/evidence_refs"},
+        "reproducible_build_evidence_refs": {"$ref": "#/$defs/evidence_refs"},
+        "live_code_evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      }
+    },
+    "evm_dependency_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dependency_id",
+        "role",
+        "native_id",
+        "trust_class",
+        "capability_scope_digest",
+        "runtime_code_digest",
+        "replacement_authority",
+        "evidence_refs"
+      ],
+      "properties": {
+        "dependency_id": {"type": "string", "minLength": 1},
+        "role": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "native_id": {"type": "string", "minLength": 1},
+        "trust_class": {
+          "enum": ["core_deployment_pinned_immutable", "runtime_dependency", "profile_bound_external"]
+        },
+        "capability_scope_digest": {"$ref": "#/$defs/digest"},
+        "runtime_code_digest": {"$ref": "#/$defs/digest"},
+        "replacement_authority": {"$ref": "#/$defs/authority_observation"},
+        "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "properties": {"trust_class": {"const": "core_deployment_pinned_immutable"}},
+            "required": ["trust_class"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "replacement_authority": {"$ref": "#/$defs/absent_authority_observation"}
+            }
+          }
+        }
+      ]
+    },
+    "evm_runtime_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_family",
+        "chain_id",
+        "transaction_sender",
+        "deployment_model",
+        "creation",
+        "initialization",
+        "artifact",
+        "dynamic_target_policy_digest",
+        "dependencies"
+      ],
+      "properties": {
+        "runtime_family": {"const": "EVM"},
+        "chain_id": {"$ref": "#/$defs/decimal"},
+        "transaction_sender": {"$ref": "#/$defs/evm_address"},
+        "deployment_model": {"enum": ["direct", "proxy", "beacon", "diamond", "other"]},
+        "creation": {"$ref": "#/$defs/evm_creation_evidence"},
+        "initialization": {"$ref": "#/$defs/evm_initialization_evidence"},
+        "artifact": {"$ref": "#/$defs/evm_artifact_evidence"},
+        "dynamic_target_policy_digest": {"$ref": "#/$defs/digest"},
+        "dependencies": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/evm_dependency_evidence"}
+        }
+      }
+    },
+    "svm_loader_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "loader_program_id",
+        "loader_model",
+        "programdata_id",
+        "programdata_digest",
+        "upgrade_authority",
+        "close_authority",
+        "evidence_refs"
+      ],
+      "properties": {
+        "loader_program_id": {"type": "string", "minLength": 1},
+        "loader_model": {"enum": ["bpf_upgradeable", "loader_v4", "immutable_loader", "other"]},
+        "programdata_id": {"type": ["string", "null"], "minLength": 1},
+        "programdata_digest": {
+          "oneOf": [
+            {"$ref": "#/$defs/digest"},
+            {"type": "null"}
+          ]
+        },
+        "upgrade_authority": {"$ref": "#/$defs/authority_observation"},
+        "close_authority": {"$ref": "#/$defs/authority_observation"},
+        "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "properties": {"programdata_id": {"type": "null"}},
+            "required": ["programdata_id"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {"programdata_digest": {"type": "null"}}
+          },
+          "else": {
+            "type": "object",
+            "properties": {"programdata_digest": {"$ref": "#/$defs/digest"}}
+          }
+        }
+      ]
+    },
+    "svm_artifact_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_commit",
+        "elf_digest",
+        "idl_digest",
+        "build_environment_digest",
+        "source_evidence_refs",
+        "reproducible_build_evidence_refs",
+        "live_program_evidence_refs"
+      ],
+      "properties": {
+        "source_commit": {"$ref": "#/$defs/git_commit"},
+        "elf_digest": {"$ref": "#/$defs/digest"},
+        "idl_digest": {"$ref": "#/$defs/digest"},
+        "build_environment_digest": {"$ref": "#/$defs/digest"},
+        "source_evidence_refs": {"$ref": "#/$defs/evidence_refs"},
+        "reproducible_build_evidence_refs": {"$ref": "#/$defs/evidence_refs"},
+        "live_program_evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      }
+    },
+    "svm_initialization_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transaction_id",
+        "ledger_position",
+        "instruction_index",
+        "program_id",
+        "instruction_data",
+        "ordered_accounts_digest",
+        "evidence_refs"
+      ],
+      "properties": {
+        "transaction_id": {"type": "string", "minLength": 1},
+        "ledger_position": {"type": "string", "minLength": 1},
+        "instruction_index": {"$ref": "#/$defs/decimal"},
+        "program_id": {"type": "string", "minLength": 1},
+        "instruction_data": {"$ref": "#/$defs/hex_bytes"},
+        "ordered_accounts_digest": {"$ref": "#/$defs/digest"},
+        "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      }
+    },
+    "svm_initialization_evidence": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "steps"],
+          "properties": {
+            "mode": {"const": "instructions"},
+            "steps": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {"$ref": "#/$defs/svm_initialization_step"}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "reason", "evidence_refs"],
+          "properties": {
+            "mode": {"const": "none"},
+            "reason": {"type": "string", "minLength": 1},
+            "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+          }
+        }
+      ]
+    },
+    "svm_state_account_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "account_id",
+        "owner_program_id",
+        "derivation_digest",
+        "data_digest",
+        "mutation_authority",
+        "evidence_refs"
+      ],
+      "properties": {
+        "account_id": {"type": "string", "minLength": 1},
+        "owner_program_id": {"type": "string", "minLength": 1},
+        "derivation_digest": {"$ref": "#/$defs/digest"},
+        "data_digest": {"$ref": "#/$defs/digest"},
+        "mutation_authority": {"$ref": "#/$defs/authority_observation"},
+        "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      }
+    },
+    "svm_state_evidence": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "accounts"],
+          "properties": {
+            "mode": {"const": "accounts"},
+            "accounts": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {"$ref": "#/$defs/svm_state_account_evidence"}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "evidence_refs"],
+          "properties": {
+            "mode": {"const": "code_only"},
+            "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+          }
+        }
+      ]
+    },
+    "svm_dependency_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dependency_id",
+        "role",
+        "program_id",
+        "loader_program_id",
+        "trust_class",
+        "capability_scope_digest",
+        "artifact_digest",
+        "upgrade_authority",
+        "evidence_refs"
+      ],
+      "properties": {
+        "dependency_id": {"type": "string", "minLength": 1},
+        "role": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "program_id": {"type": "string", "minLength": 1},
+        "loader_program_id": {"type": "string", "minLength": 1},
+        "trust_class": {
+          "enum": ["core_deployment_pinned_immutable", "runtime_dependency", "profile_bound_external"]
+        },
+        "capability_scope_digest": {"$ref": "#/$defs/digest"},
+        "artifact_digest": {"$ref": "#/$defs/digest"},
+        "upgrade_authority": {"$ref": "#/$defs/authority_observation"},
+        "evidence_refs": {"$ref": "#/$defs/evidence_refs"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "properties": {"trust_class": {"const": "core_deployment_pinned_immutable"}},
+            "required": ["trust_class"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "upgrade_authority": {"$ref": "#/$defs/absent_authority_observation"}
+            }
+          }
+        }
+      ]
+    },
+    "svm_runtime_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_family",
+        "genesis_hash",
+        "program_id",
+        "loader",
+        "initialization",
+        "artifact",
+        "immutable_state",
+        "dynamic_target_policy_digest",
+        "dependencies"
+      ],
+      "properties": {
+        "runtime_family": {"const": "SVM"},
+        "genesis_hash": {"type": "string", "minLength": 1},
+        "program_id": {"type": "string", "minLength": 1},
+        "loader": {"$ref": "#/$defs/svm_loader_evidence"},
+        "initialization": {"$ref": "#/$defs/svm_initialization_evidence"},
+        "artifact": {"$ref": "#/$defs/svm_artifact_evidence"},
+        "immutable_state": {"$ref": "#/$defs/svm_state_evidence"},
+        "dynamic_target_policy_digest": {"$ref": "#/$defs/digest"},
+        "dependencies": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/svm_dependency_evidence"}
+        }
+      }
+    }
+  }
+}

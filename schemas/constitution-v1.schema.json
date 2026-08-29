@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:programmable:schema:constitution:v1",
+  "title": "Programmable Constitution V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "constitution_id",
+    "protocol_spec_id",
+    "status",
+    "core_major",
+    "protected_authority",
+    "permitted_execution_profiles",
+    "permitted_authorization_profiles",
+    "permitted_conformance_profiles",
+    "protocol_assessment",
+    "evidence_model",
+    "production_authorities"
+  ],
+  "properties": {
+    "$schema": {"const": "urn:programmable:schema:constitution:v1"},
+    "constitution_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "protocol_spec_id": {
+      "type": "string",
+      "pattern": "^programmable-protocol/[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.]+)?$"
+    },
+    "status": {"enum": ["draft", "candidate", "final"]},
+    "core_major": {"const": "1"},
+    "protected_authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "effect_profile_id",
+        "capability_ids",
+        "engine_proposable_effect_ids",
+        "core_derived_effect_ids",
+        "unknown_required_effect",
+        "generic_privileged_call",
+        "engine_ambient_authority",
+        "protected_driver_policy"
+      ],
+      "properties": {
+        "effect_profile_id": {"const": "programmable.protected-effects.v1"},
+        "capability_ids": {
+          "type": "array",
+          "prefixItems": [
+            {"const": "programmable.capability.asset_move.v1"},
+            {"const": "programmable.capability.core_rights.v1"},
+            {"const": "programmable.capability.profile_operation.v1"},
+            {"const": "programmable.capability.temporary_obligation.v1"},
+            {"const": "programmable.capability.authorization_state.v1"},
+            {"const": "programmable.capability.domain_revision.v1"}
+          ],
+          "items": false,
+          "minItems": 6,
+          "maxItems": 6
+        },
+        "engine_proposable_effect_ids": {
+          "type": "array",
+          "prefixItems": [
+            {"const": "programmable.effect.asset_move.v1"},
+            {"const": "programmable.effect.core_rights_delta.v1"},
+            {"const": "programmable.effect.profile_operation.v1"},
+            {"const": "programmable.effect.temporary_obligation_open.v1"}
+          ],
+          "items": false,
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "core_derived_effect_ids": {
+          "type": "array",
+          "prefixItems": [
+            {"const": "programmable.effect.temporary_obligation_close.v1"},
+            {"const": "programmable.effect.authorization_state_advance.v1"},
+            {"const": "programmable.effect.domain_revision_commit.v1"},
+            {"const": "programmable.effect.domain_accounting_commit.v1"},
+            {"const": "programmable.effect.protocol_assessment.v1"},
+            {"const": "programmable.effect.receipt_checkpoint.v1"}
+          ],
+          "items": false,
+          "minItems": 6,
+          "maxItems": 6
+        },
+        "unknown_required_effect": {"const": "reject_before_movement"},
+        "generic_privileged_call": {"const": false},
+        "engine_ambient_authority": {"const": false},
+        "protected_driver_policy": {"const": "immutable_core_deployment_pinned_only"}
+      }
+    },
+    "permitted_execution_profiles": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": {"enum": ["ATOMIC_PLAN_V1", "BOUNDED_SESSION_V1"]},
+      "allOf": [
+        {"contains": {"const": "ATOMIC_PLAN_V1"}},
+        {"contains": {"const": "BOUNDED_SESSION_V1"}}
+      ]
+    },
+    "permitted_authorization_profiles": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "enum": ["direct-one-shot-v1", "signed-one-shot-v1", "stored-scope-v1"]
+      },
+      "allOf": [
+        {"contains": {"const": "direct-one-shot-v1"}},
+        {"contains": {"const": "signed-one-shot-v1"}},
+        {"contains": {"const": "stored-scope-v1"}}
+      ]
+    },
+    "permitted_conformance_profiles": {
+      "description": "The complete portable conformance-profile vocabulary for this Constitution. Binding-native and Asset Profile identifiers are never stored here.",
+      "type": "array",
+      "prefixItems": [
+        {"const": "portable-core-v1"},
+        {"const": "stored-scope-v1"},
+        {"const": "bounded-session-v1"},
+        {"const": "sponsored-assessment-v1"},
+        {"const": "external-asset-tax-v1"},
+        {"const": "engine-independent-exit-v1"}
+      ],
+      "items": false,
+      "minItems": 6,
+      "maxItems": 6,
+      "uniqueItems": true
+    },
+    "protocol_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessment_id",
+        "basis_id",
+        "exclusion_set_id",
+        "rate_numerator",
+        "rate_denominator",
+        "arithmetic_bits",
+        "rounding",
+        "collector_policy"
+      ],
+      "properties": {
+        "assessment_id": {"const": "ProtocolAssessmentV1"},
+        "basis_id": {"const": "PrincipalFundedGrossDebitV1"},
+        "exclusion_set_id": {"const": "PrincipalFundedGrossDebitV1ClosedExclusions"},
+        "rate_numerator": {"const": "5"},
+        "rate_denominator": {"const": "10000"},
+        "arithmetic_bits": {"const": "128"},
+        "rounding": {"const": "floor_after_cumulative_group_aggregation"},
+        "collector_policy": {"const": "immutable_per_core_deployment"}
+      }
+    },
+    "evidence_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "dependency_axis", "support_axis"],
+      "properties": {
+        "profile_id": {"const": "programmable.evidence.v1"},
+        "dependency_axis": {"const": "separate"},
+        "support_axis": {"const": "separate"}
+      }
+    },
+    "production_authorities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "upgrade",
+        "configuration",
+        "fee",
+        "pause_or_quarantine",
+        "sweep_or_redirection",
+        "forced_migration"
+      ],
+      "properties": {
+        "upgrade": {"const": false},
+        "configuration": {"const": false},
+        "fee": {"const": false},
+        "pause_or_quarantine": {"const": false},
+        "sweep_or_redirection": {"const": false},
+        "forced_migration": {"const": false}
+      }
+    }
+  }
+}

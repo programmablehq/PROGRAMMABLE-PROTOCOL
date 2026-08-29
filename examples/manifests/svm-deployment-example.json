@@ -1,0 +1,196 @@
+{
+  "$schema": "urn:programmable:schema:deployment-manifest:v1",
+  "binding_release_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000001",
+  "portable_profiles": ["portable-core-v1"],
+  "portable_vector_set_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000002",
+  "binding_native_profile_claims": [
+    {
+      "claim_type": "binding_native",
+      "profile_id": "programmable.svm.immutable-program.v1",
+      "conformance": {
+        "native_vector_set_path": "conformance/native/immutable-program-v1.vectors.json",
+        "native_vector_set_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000003",
+        "native_test_report_path": "conformance/native/immutable-program-v1.report.json",
+        "native_test_report_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000004"
+      }
+    }
+  ],
+  "asset_profile_claims": [
+    {
+      "claim_type": "asset_profile",
+      "asset_profile_id": "programmable.svm.asset.spl-token-classic.v1",
+      "conformance": {
+        "native_vector_set_path": "conformance/assets/spl-token-classic-v1.vectors.json",
+        "native_vector_set_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000005",
+        "native_test_report_path": "conformance/assets/spl-token-classic-v1.report.json",
+        "native_test_report_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000006"
+      }
+    }
+  ],
+  "runtime_family": "SVM",
+  "network": {
+    "namespace": "solana",
+    "reference": "example-cluster",
+    "genesis_or_anchor": "ExampleGenesisHash111111111111111111111111111",
+    "evidence_refs": ["evidence:network"]
+  },
+  "core": {
+    "native_id": "ExampleCore111111111111111111111111111111111",
+    "core_major": "1",
+    "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+    "protocol_collector_id": "collector:example",
+    "artifact_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000002"
+  },
+  "deployment": {
+    "transaction_id": "ExampleDeploymentSignature111111111111111111111111",
+    "ledger_position": "slot:1",
+    "evidence_refs": ["evidence:deployment"]
+  },
+  "authority_evidence": {
+    "code_replacement": {
+      "conclusion": "not_assessed",
+      "evidence_refs": ["evidence:authority-placeholder"]
+    },
+    "configuration_mutation": {
+      "conclusion": "not_assessed",
+      "evidence_refs": ["evidence:authority-placeholder"]
+    },
+    "assessment_mutation": {
+      "conclusion": "not_assessed",
+      "evidence_refs": ["evidence:authority-placeholder"]
+    },
+    "pause_or_quarantine": {
+      "conclusion": "not_assessed",
+      "evidence_refs": ["evidence:authority-placeholder"]
+    },
+    "sweep_or_redirection": {
+      "conclusion": "not_assessed",
+      "evidence_refs": ["evidence:authority-placeholder"]
+    },
+    "forced_migration": {
+      "conclusion": "not_assessed",
+      "evidence_refs": ["evidence:authority-placeholder"]
+    }
+  },
+  "classification": "example",
+  "evidence_catalog": [
+    {
+      "evidence_id": "evidence:network",
+      "kind": "ledger_state",
+      "locator": "urn:example:svm:network",
+      "digest": "sha256:1000000000000000000000000000000000000000000000000000000000000010",
+      "observed_at": "example-only"
+    },
+    {
+      "evidence_id": "evidence:deployment",
+      "kind": "deployment_transaction",
+      "locator": "urn:example:svm:deployment",
+      "digest": "sha256:1000000000000000000000000000000000000000000000000000000000000011",
+      "observed_at": "example-only"
+    },
+    {
+      "evidence_id": "evidence:source",
+      "kind": "source_artifact",
+      "locator": "urn:example:svm:source",
+      "digest": "sha256:1000000000000000000000000000000000000000000000000000000000000012",
+      "observed_at": "example-only"
+    },
+    {
+      "evidence_id": "evidence:build",
+      "kind": "reproducible_build",
+      "locator": "urn:example:svm:build",
+      "digest": "sha256:1000000000000000000000000000000000000000000000000000000000000013",
+      "observed_at": "example-only"
+    },
+    {
+      "evidence_id": "evidence:live-program",
+      "kind": "runtime_query",
+      "locator": "urn:example:svm:live-program",
+      "digest": "sha256:1000000000000000000000000000000000000000000000000000000000000014",
+      "observed_at": "example-only"
+    },
+    {
+      "evidence_id": "evidence:authority-placeholder",
+      "kind": "other",
+      "locator": "urn:example:not-assessed",
+      "digest": "sha256:1000000000000000000000000000000000000000000000000000000000000015",
+      "observed_at": "example-only"
+    }
+  ],
+  "runtime_evidence": {
+    "runtime_family": "SVM",
+    "genesis_hash": "ExampleGenesisHash111111111111111111111111111",
+    "program_id": "ExampleCore111111111111111111111111111111111",
+    "loader": {
+      "loader_program_id": "BPFLoaderUpgradeab1e11111111111111111111111",
+      "loader_model": "bpf_upgradeable",
+      "programdata_id": "ExampleProgramData11111111111111111111111111",
+      "programdata_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000020",
+      "upgrade_authority": {
+        "conclusion": "not_assessed",
+        "evidence_refs": ["evidence:authority-placeholder"]
+      },
+      "close_authority": {
+        "conclusion": "not_assessed",
+        "evidence_refs": ["evidence:authority-placeholder"]
+      },
+      "evidence_refs": ["evidence:live-program"]
+    },
+    "initialization": {
+      "mode": "instructions",
+      "steps": [
+        {
+          "transaction_id": "ExampleInitializationSignature1111111111111111111",
+          "ledger_position": "slot:2",
+          "instruction_index": "0",
+          "program_id": "ExampleCore111111111111111111111111111111111",
+          "instruction_data": "0x0100",
+          "ordered_accounts_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000021",
+          "evidence_refs": ["evidence:deployment"]
+        }
+      ]
+    },
+    "artifact": {
+      "source_commit": "2222222222222222222222222222222222222222",
+      "elf_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000002",
+      "idl_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000022",
+      "build_environment_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000023",
+      "source_evidence_refs": ["evidence:source"],
+      "reproducible_build_evidence_refs": ["evidence:build"],
+      "live_program_evidence_refs": ["evidence:live-program"]
+    },
+    "immutable_state": {
+      "mode": "accounts",
+      "accounts": [
+        {
+          "account_id": "ExampleConstitution11111111111111111111111111",
+          "owner_program_id": "ExampleCore111111111111111111111111111111111",
+          "derivation_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000024",
+          "data_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000025",
+          "mutation_authority": {
+            "conclusion": "not_assessed",
+            "evidence_refs": ["evidence:authority-placeholder"]
+          },
+          "evidence_refs": ["evidence:live-program"]
+        }
+      ]
+    },
+    "dynamic_target_policy_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000026",
+    "dependencies": [
+      {
+        "dependency_id": "dependency:example-runtime",
+        "role": "token_program",
+        "program_id": "ExampleTokenProgram1111111111111111111111111",
+        "loader_program_id": "BPFLoaderUpgradeab1e11111111111111111111111",
+        "trust_class": "runtime_dependency",
+        "capability_scope_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000027",
+        "artifact_digest": "sha256:1000000000000000000000000000000000000000000000000000000000000028",
+        "upgrade_authority": {
+          "conclusion": "not_assessed",
+          "evidence_refs": ["evidence:authority-placeholder"]
+        },
+        "evidence_refs": ["evidence:live-program"]
+      }
+    ]
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "$schema": "urn:programmable:schema:constitution:v1",
+  "constitution_id": "sha256:2715d9770de7b327c054c413a99f7cbba0933f2eabc9639a53948706237cd301",
+  "protocol_spec_id": "programmable-protocol/0.1.0-draft.1",
+  "status": "draft",
+  "core_major": "1",
+  "protected_authority": {
+    "effect_profile_id": "programmable.protected-effects.v1",
+    "capability_ids": [
+      "programmable.capability.asset_move.v1",
+      "programmable.capability.core_rights.v1",
+      "programmable.capability.profile_operation.v1",
+      "programmable.capability.temporary_obligation.v1",
+      "programmable.capability.authorization_state.v1",
+      "programmable.capability.domain_revision.v1"
+    ],
+    "engine_proposable_effect_ids": [
+      "programmable.effect.asset_move.v1",
+      "programmable.effect.core_rights_delta.v1",
+      "programmable.effect.profile_operation.v1",
+      "programmable.effect.temporary_obligation_open.v1"
+    ],
+    "core_derived_effect_ids": [
+      "programmable.effect.temporary_obligation_close.v1",
+      "programmable.effect.authorization_state_advance.v1",
+      "programmable.effect.domain_revision_commit.v1",
+      "programmable.effect.domain_accounting_commit.v1",
+      "programmable.effect.protocol_assessment.v1",
+      "programmable.effect.receipt_checkpoint.v1"
+    ],
+    "unknown_required_effect": "reject_before_movement",
+    "generic_privileged_call": false,
+    "engine_ambient_authority": false,
+    "protected_driver_policy": "immutable_core_deployment_pinned_only"
+  },
+  "permitted_execution_profiles": [
+    "ATOMIC_PLAN_V1",
+    "BOUNDED_SESSION_V1"
+  ],
+  "permitted_authorization_profiles": [
+    "direct-one-shot-v1",
+    "signed-one-shot-v1",
+    "stored-scope-v1"
+  ],
+  "permitted_conformance_profiles": [
+    "portable-core-v1",
+    "stored-scope-v1",
+    "bounded-session-v1",
+    "sponsored-assessment-v1",
+    "external-asset-tax-v1",
+    "engine-independent-exit-v1"
+  ],
+  "protocol_assessment": {
+    "assessment_id": "ProtocolAssessmentV1",
+    "basis_id": "PrincipalFundedGrossDebitV1",
+    "exclusion_set_id": "PrincipalFundedGrossDebitV1ClosedExclusions",
+    "rate_numerator": "5",
+    "rate_denominator": "10000",
+    "arithmetic_bits": "128",
+    "rounding": "floor_after_cumulative_group_aggregation",
+    "collector_policy": "immutable_per_core_deployment"
+  },
+  "evidence_model": {
+    "profile_id": "programmable.evidence.v1",
+    "dependency_axis": "separate",
+    "support_axis": "separate"
+  },
+  "production_authorities": {
+    "upgrade": false,
+    "configuration": false,
+    "fee": false,
+    "pause_or_quarantine": false,
+    "sweep_or_redirection": false,
+    "forced_migration": false
+  }
+}

@@ -1,0 +1,458 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:programmable:schema:bounded-session-vectors:v1",
+  "title": "Bounded Session V1 conformance vectors",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "protocol_spec_id", "algorithm", "cases"],
+  "properties": {
+    "$schema": {"const": "urn:programmable:schema:bounded-session-vectors:v1"},
+    "protocol_spec_id": {"type": "string", "minLength": 1},
+    "algorithm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonicalization", "hash", "separator", "initial_domain", "segment_domain", "final_domain"],
+      "properties": {
+        "canonicalization": {"const": "RFC8785-JCS"},
+        "hash": {"const": "SHA-256"},
+        "separator": {"const": "00"},
+        "initial_domain": {"const": "programmable:bounded-session:v1:init"},
+        "segment_domain": {"const": "programmable:bounded-session:v1:segment"},
+        "final_domain": {"const": "programmable:bounded-session:v1:final"}
+      }
+    },
+    "cases": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/case"}}
+  },
+  "$defs": {
+    "decimal": {"type": "string", "pattern": "^(0|[1-9][0-9]*)$"},
+    "identifier": {"type": "string", "minLength": 1, "maxLength": 256},
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "evidence_class": {"enum": ["CORE_VERIFIED", "PROFILE_VERIFIED", "ENGINE_ATTESTED", "OFFCHAIN_DERIVED"]},
+    "resource_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_segments", "max_target_calls", "max_protected_effects", "max_obligation_keys",
+        "max_observations", "max_observed_bytes", "max_return_bytes"
+      ],
+      "properties": {
+        "max_segments": {"$ref": "#/$defs/decimal"},
+        "max_target_calls": {"$ref": "#/$defs/decimal"},
+        "max_protected_effects": {"$ref": "#/$defs/decimal"},
+        "max_obligation_keys": {"$ref": "#/$defs/decimal"},
+        "max_observations": {"$ref": "#/$defs/decimal"},
+        "max_observed_bytes": {"$ref": "#/$defs/decimal"},
+        "max_return_bytes": {"$ref": "#/$defs/decimal"}
+      }
+    },
+    "resource_use": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_calls", "protected_effects", "obligation_keys_created", "observations", "observed_bytes", "return_bytes"],
+      "properties": {
+        "target_calls": {"$ref": "#/$defs/decimal"},
+        "protected_effects": {"$ref": "#/$defs/decimal"},
+        "obligation_keys_created": {"$ref": "#/$defs/decimal"},
+        "observations": {"$ref": "#/$defs/decimal"},
+        "observed_bytes": {"$ref": "#/$defs/decimal"},
+        "return_bytes": {"$ref": "#/$defs/decimal"}
+      }
+    },
+    "measured_copied_bytes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["measurement_source", "observed_bytes", "return_bytes"],
+      "properties": {
+        "measurement_source": {"const": "CORE_RUNTIME"},
+        "observed_bytes": {"$ref": "#/$defs/decimal"},
+        "return_bytes": {"$ref": "#/$defs/decimal"}
+      }
+    },
+    "participant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "participant_id", "market_id", "engine_revision_id", "liquidity_domain_revision_ids",
+        "protected_profile_component_admissions", "temporary_obligation_admissions"
+      ],
+      "properties": {
+        "participant_id": {"$ref": "#/$defs/identifier"},
+        "market_id": {"$ref": "#/$defs/identifier"},
+        "engine_revision_id": {"$ref": "#/$defs/identifier"},
+        "liquidity_domain_revision_ids": {
+          "type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/identifier"}
+        },
+        "protected_profile_component_admissions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/protected_profile_component_admission"}
+        },
+        "temporary_obligation_admissions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/temporary_obligation_admission"}
+        }
+      }
+    },
+    "protected_profile_component_admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision_id", "component_profile_id"],
+      "properties": {
+        "revision_id": {"$ref": "#/$defs/identifier"},
+        "component_profile_id": {"$ref": "#/$defs/identifier"}
+      }
+    },
+    "temporary_obligation_admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authorization_scope_id", "domain_revision_id", "asset_profile_id", "native_asset_id",
+        "obligated_actor_id", "return_recipient_id", "max_amount"
+      ],
+      "properties": {
+        "authorization_scope_id": {"$ref": "#/$defs/identifier"},
+        "domain_revision_id": {"$ref": "#/$defs/identifier"},
+        "asset_profile_id": {"$ref": "#/$defs/identifier"},
+        "native_asset_id": {"$ref": "#/$defs/identifier"},
+        "obligated_actor_id": {"$ref": "#/$defs/identifier"},
+        "return_recipient_id": {"$ref": "#/$defs/identifier"},
+        "max_amount": {"$ref": "#/$defs/decimal"}
+      }
+    },
+    "target": {
+      "oneOf": [
+        {"$ref": "#/$defs/engine_target"},
+        {"$ref": "#/$defs/protected_profile_component_target"}
+      ]
+    },
+    "engine_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_id", "participant_id", "target_kind", "revision_id", "allowed_proposer_ids", "allowed_phases"],
+      "properties": {
+        "target_id": {"$ref": "#/$defs/identifier"},
+        "participant_id": {"$ref": "#/$defs/identifier"},
+        "target_kind": {"const": "ENGINE"},
+        "revision_id": {"$ref": "#/$defs/identifier"},
+        "allowed_proposer_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/identifier"}},
+        "allowed_phases": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["AUTHENTICATED", "ACTIVE"]}}
+      }
+    },
+    "protected_profile_component_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_id", "participant_id", "target_kind", "revision_id", "component_profile_id",
+        "authority_source", "allowed_proposer_ids", "allowed_phases"
+      ],
+      "properties": {
+        "target_id": {"$ref": "#/$defs/identifier"},
+        "participant_id": {"$ref": "#/$defs/identifier"},
+        "target_kind": {"const": "PROTECTED_PROFILE_COMPONENT"},
+        "revision_id": {"$ref": "#/$defs/identifier"},
+        "component_profile_id": {"$ref": "#/$defs/identifier"},
+        "authority_source": {"const": "IMMUTABLE_CORE_DEPLOYMENT_PIN"},
+        "allowed_proposer_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/identifier"}},
+        "allowed_phases": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["AUTHENTICATED", "ACTIVE"]}}
+      }
+    },
+    "session_descriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "core_deployment_id", "constitution_id", "envelope_id", "native_occurrence_id",
+        "authorization_scope_ids", "participants", "targets", "resource_limits"
+      ],
+      "properties": {
+        "core_deployment_id": {"$ref": "#/$defs/identifier"},
+        "constitution_id": {"$ref": "#/$defs/identifier"},
+        "envelope_id": {"$ref": "#/$defs/identifier"},
+        "native_occurrence_id": {"$ref": "#/$defs/identifier"},
+        "authorization_scope_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/identifier"}},
+        "participants": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/participant"}},
+        "targets": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/target"}},
+        "resource_limits": {"$ref": "#/$defs/resource_limits"}
+      }
+    },
+    "session_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["session_id", "session_descriptor"],
+      "properties": {
+        "session_id": {"$ref": "#/$defs/identifier"},
+        "session_descriptor": {"$ref": "#/$defs/session_descriptor"}
+      }
+    },
+    "observation": {
+      "oneOf": [
+        {"$ref": "#/$defs/protected_observation"},
+        {"$ref": "#/$defs/opaque_observation"},
+        {"$ref": "#/$defs/state_checkpoint_observation"}
+      ]
+    },
+    "protected_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation_id", "producer_id", "source_target_id", "kind", "source_actor_id", "destination_id",
+        "domain_revision_id", "asset_profile_id", "native_asset_id", "amount", "evidence_class", "value_digest"
+      ],
+      "properties": {
+        "observation_id": {"$ref": "#/$defs/identifier"},
+        "producer_id": {"const": "programmable.core"},
+        "source_target_id": {"$ref": "#/$defs/identifier"},
+        "kind": {"enum": ["PROTECTED_GROSS_OUTFLOW", "PROTECTED_GROSS_RETURN", "PROTECTED_SPENDABLE_RETURN"]},
+        "source_actor_id": {"$ref": "#/$defs/identifier"},
+        "destination_id": {"$ref": "#/$defs/identifier"},
+        "domain_revision_id": {"$ref": "#/$defs/identifier"},
+        "asset_profile_id": {"$ref": "#/$defs/identifier"},
+        "native_asset_id": {"$ref": "#/$defs/identifier"},
+        "amount": {"$ref": "#/$defs/decimal"},
+        "evidence_class": {"const": "PROFILE_VERIFIED"},
+        "value_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "opaque_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observation_id", "producer_id", "source_target_id", "kind", "evidence_class", "value_digest"],
+      "properties": {
+        "observation_id": {"$ref": "#/$defs/identifier"},
+        "producer_id": {"const": "programmable.core"},
+        "source_target_id": {"$ref": "#/$defs/identifier"},
+        "kind": {"const": "OPAQUE_TARGET_RESULT"},
+        "evidence_class": {"const": "ENGINE_ATTESTED"},
+        "value_digest": {"$ref": "#/$defs/digest"},
+        "external_dependency_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/identifier"}}
+      }
+    },
+    "state_checkpoint_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observation_id", "producer_id", "source_target_id", "kind", "evidence_class", "value_digest"],
+      "properties": {
+        "observation_id": {"$ref": "#/$defs/identifier"},
+        "producer_id": {"const": "programmable.core"},
+        "source_target_id": {"$ref": "#/$defs/identifier"},
+        "kind": {"const": "STATE_CHECKPOINT"},
+        "evidence_class": {"$ref": "#/$defs/evidence_class"},
+        "value_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "obligation_key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session_id", "obligation_key_id", "opening_effect_occurrence_id", "authorization_scope_id",
+        "domain_revision_id", "asset_profile_id", "native_asset_id", "obligated_actor_id",
+        "return_recipient_id", "return_condition", "close_by_segment_ordinal"
+      ],
+      "properties": {
+        "session_id": {"$ref": "#/$defs/identifier"},
+        "obligation_key_id": {"$ref": "#/$defs/identifier"},
+        "opening_effect_occurrence_id": {"$ref": "#/$defs/identifier"},
+        "authorization_scope_id": {"$ref": "#/$defs/identifier"},
+        "domain_revision_id": {"$ref": "#/$defs/identifier"},
+        "asset_profile_id": {"$ref": "#/$defs/identifier"},
+        "native_asset_id": {"$ref": "#/$defs/identifier"},
+        "obligated_actor_id": {"$ref": "#/$defs/identifier"},
+        "return_recipient_id": {"$ref": "#/$defs/identifier"},
+        "return_condition": {"enum": ["GROSS_AT_LEAST", "SPENDABLE_AT_LEAST"]},
+        "close_by_segment_ordinal": {"$ref": "#/$defs/decimal"}
+      }
+    },
+    "obligation_operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "key", "amount", "observation_id"],
+      "properties": {
+        "operation": {"enum": ["OPEN", "CLOSE"]},
+        "key": {"$ref": "#/$defs/obligation_key"},
+        "amount": {"$ref": "#/$defs/decimal"},
+        "observation_id": {"$ref": "#/$defs/identifier"},
+        "allocation_id": {"$ref": "#/$defs/identifier"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"operation": {"const": "CLOSE"}}, "required": ["operation"]},
+          "then": {"properties": {"allocation_id": true}, "required": ["allocation_id"]},
+          "else": {"properties": {"allocation_id": false}}
+        }
+      ]
+    },
+    "temporary_obligation_opening_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "effect_occurrence_id", "effect_id", "execution_target_id", "participant_id",
+        "authorization_scope_id", "domain_revision_id", "asset_profile_id", "native_asset_id",
+        "obligated_actor_id", "return_recipient_id", "gross_debit"
+      ],
+      "properties": {
+        "effect_occurrence_id": {"$ref": "#/$defs/identifier"},
+        "effect_id": {"const": "programmable.effect.temporary_obligation_open.v1"},
+        "execution_target_id": {"$ref": "#/$defs/identifier"},
+        "participant_id": {"$ref": "#/$defs/identifier"},
+        "authorization_scope_id": {"$ref": "#/$defs/identifier"},
+        "domain_revision_id": {"$ref": "#/$defs/identifier"},
+        "asset_profile_id": {"$ref": "#/$defs/identifier"},
+        "native_asset_id": {"$ref": "#/$defs/identifier"},
+        "obligated_actor_id": {"$ref": "#/$defs/identifier"},
+        "return_recipient_id": {"$ref": "#/$defs/identifier"},
+        "gross_debit": {"$ref": "#/$defs/decimal"}
+      }
+    },
+    "terminal_settlement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assessment_funding_status", "obligation_state_digest", "protected_accounting_digest", "assessment_state_digest"],
+      "properties": {
+        "assessment_funding_status": {"const": "SETTLED"},
+        "obligation_state_digest": {"$ref": "#/$defs/digest"},
+        "protected_accounting_digest": {"$ref": "#/$defs/digest"},
+        "assessment_state_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "segment_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session_id", "segment_ordinal", "phase_before", "phase_after", "proposer_id", "target_ids",
+        "segment_payload_digest", "effect_proposal_digest", "protected_effect_occurrence_ids",
+        "temporary_obligation_opening_effects", "observations",
+        "obligation_operations", "resource_use", "protected_movement"
+      ],
+      "properties": {
+        "session_id": {"$ref": "#/$defs/identifier"},
+        "segment_ordinal": {"$ref": "#/$defs/decimal"},
+        "phase_before": {"enum": ["AUTHENTICATED", "ACTIVE"]},
+        "phase_after": {"enum": ["ACTIVE", "RECONCILING"]},
+        "proposer_id": {"$ref": "#/$defs/identifier"},
+        "target_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/identifier"}},
+        "segment_payload_digest": {"$ref": "#/$defs/digest"},
+        "effect_proposal_digest": {"$ref": "#/$defs/digest"},
+        "protected_effect_occurrence_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/identifier"}},
+        "temporary_obligation_opening_effects": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/temporary_obligation_opening_effect"}
+        },
+        "observations": {"type": "array", "items": {"$ref": "#/$defs/observation"}},
+        "obligation_operations": {"type": "array", "items": {"$ref": "#/$defs/obligation_operation"}},
+        "resource_use": {"$ref": "#/$defs/resource_use"},
+        "protected_movement": {"type": "boolean"},
+        "terminal_settlement": {"$ref": "#/$defs/terminal_settlement"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"phase_after": {"const": "RECONCILING"}}, "required": ["phase_after"]},
+          "then": {"properties": {"terminal_settlement": true}, "required": ["terminal_settlement"]},
+          "else": {"properties": {"terminal_settlement": false}}
+        }
+      ]
+    },
+    "segment_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claimed_before_digest", "record", "measured_copied_bytes"],
+      "properties": {
+        "claimed_before_digest": {"$ref": "#/$defs/digest"},
+        "record": {"$ref": "#/$defs/segment_record"},
+        "measured_copied_bytes": {"$ref": "#/$defs/measured_copied_bytes"},
+        "expected_after_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "participant_checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["participant_id", "state_digest", "evidence_class"],
+      "properties": {
+        "participant_id": {"$ref": "#/$defs/identifier"},
+        "state_digest": {"$ref": "#/$defs/digest"},
+        "evidence_class": {"const": "ENGINE_ATTESTED"}
+      }
+    },
+    "final_checkpoint_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session_id", "phase_before", "phase_after", "participant_checkpoints", "obligation_state_digest",
+        "protected_accounting_digest", "assessment_state_digest", "receipt_payload_digest"
+      ],
+      "properties": {
+        "session_id": {"$ref": "#/$defs/identifier"},
+        "phase_before": {"const": "RECONCILING"},
+        "phase_after": {"const": "FINAL_CHECKPOINT"},
+        "participant_checkpoints": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/participant_checkpoint"}},
+        "obligation_state_digest": {"$ref": "#/$defs/digest"},
+        "protected_accounting_digest": {"$ref": "#/$defs/digest"},
+        "assessment_state_digest": {"$ref": "#/$defs/digest"},
+        "receipt_payload_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "final_checkpoint_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claimed_before_digest", "record"],
+      "properties": {
+        "claimed_before_digest": {"$ref": "#/$defs/digest"},
+        "record": {"$ref": "#/$defs/final_checkpoint_record"},
+        "expected_final_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "accepted_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["initial_digest", "segment_after_digests", "final_digest", "final_phase", "open_obligation_count"],
+      "properties": {
+        "initial_digest": {"$ref": "#/$defs/digest"},
+        "segment_after_digests": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/digest"}},
+        "final_digest": {"$ref": "#/$defs/digest"},
+        "final_phase": {"const": "COMMITTED"},
+        "open_obligation_count": {"const": "0"}
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id", "purpose", "required_profiles", "expected_status", "session_context", "steps"],
+      "properties": {
+        "case_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$"},
+        "purpose": {"type": "string", "minLength": 1},
+        "required_profiles": {
+          "const": ["portable-core-v1", "bounded-session-v1"]
+        },
+        "expected_status": {"enum": ["accept", "reject"]},
+        "expected_error": {
+          "enum": [
+            "invalid_phase_transition", "invalid_segment_ordinal", "unauthorized_proposer",
+            "unknown_or_unauthorized_target", "target_revision_mismatch", "target_component_admission_mismatch", "target_call_reused",
+            "transcript_mismatch", "resource_limit_exceeded", "invalid_observation",
+            "domain_or_scope_outside_session", "protected_movement_mismatch", "effect_occurrence_reused",
+            "obligation_key_reused", "obligation_key_mismatch", "obligation_overclose",
+            "obligation_deadline_exceeded", "obligation_remaining", "terminal_settlement_invalid",
+            "final_checkpoint_invalid"
+          ]
+        },
+        "session_context": {"$ref": "#/$defs/session_context"},
+        "steps": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/segment_step"}},
+        "final_checkpoint": {"$ref": "#/$defs/final_checkpoint_step"},
+        "expected": {"$ref": "#/$defs/accepted_result"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"expected_status": {"const": "accept"}}, "required": ["expected_status"]},
+          "then": {
+            "properties": {"final_checkpoint": true, "expected": true, "expected_error": false},
+            "required": ["final_checkpoint", "expected"]
+          },
+          "else": {
+            "properties": {"expected_error": true, "expected": false},
+            "required": ["expected_error"]
+          }
+        }
+      ]
+    }
+  }
+}

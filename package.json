@@ -1,0 +1,19 @@
+{
+  "name": "@programmable/protocol",
+  "version": "0.1.0-draft.1",
+  "private": true,
+  "type": "module",
+  "description": "Portable specification and conformance artifacts for Programmable Protocol.",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node tools/check.mjs"
+  },
+  "devDependencies": {
+    "ajv": "8.20.0",
+    "canonicalize": "4.0.0",
+    "json-dup-key-validator": "1.0.3"
+  }
+}

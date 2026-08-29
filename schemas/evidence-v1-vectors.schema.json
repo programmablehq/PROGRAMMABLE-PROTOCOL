@@ -1,0 +1,1137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:programmable:schema:evidence-vectors:v1",
+  "title": "Evidence V1 conformance vectors",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "protocol_spec_id",
+    "evidence_profile_id",
+    "cases"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "urn:programmable:schema:evidence-vectors:v1"
+    },
+    "protocol_spec_id": {
+      "type": "string",
+      "pattern": "^programmable-protocol/[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.]+)?$"
+    },
+    "evidence_profile_id": {
+      "const": "programmable.evidence.v1"
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    }
+  },
+  "$defs": {
+    "decimal": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[^\\s]+$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "profile_id": {
+      "enum": [
+        "portable-core-v1",
+        "stored-scope-v1",
+        "bounded-session-v1",
+        "sponsored-assessment-v1",
+        "external-asset-tax-v1",
+        "engine-independent-exit-v1"
+      ]
+    },
+    "primary_provenance": {
+      "enum": [
+        "CORE_VERIFIED",
+        "PROFILE_VERIFIED",
+        "ENGINE_ATTESTED",
+        "OFFCHAIN_DERIVED"
+      ]
+    },
+    "support_status": {
+      "enum": [
+        "SUPPORTED",
+        "UNSUPPORTED"
+      ]
+    },
+    "execution_coverage": {
+      "enum": [
+        "CORE_ENFORCED",
+        "PARTIAL",
+        "NONE"
+      ]
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "purpose",
+        "required_profiles",
+        "expected_status",
+        "input"
+      ],
+      "properties": {
+        "case_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]+$"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_profiles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/profile_id"
+          },
+          "contains": {
+            "const": "portable-core-v1"
+          }
+        },
+        "expected_status": {
+          "enum": [
+            "accept",
+            "reject"
+          ]
+        },
+        "reject_code": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]+$"
+        },
+        "input": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/evidence_axes_input"
+            },
+            {
+              "$ref": "#/$defs/core_verified_input"
+            },
+            {
+              "$ref": "#/$defs/final_state_input"
+            },
+            {
+              "$ref": "#/$defs/normalized_receipt_input"
+            },
+            {
+              "$ref": "#/$defs/assessment_receipt_input"
+            },
+            {
+              "$ref": "#/$defs/bounded_session_receipt_input"
+            },
+            {
+              "$ref": "#/$defs/offchain_valuation_input"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "expected_status": {
+                "const": "reject"
+              }
+            },
+            "required": [
+              "expected_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reject_code": {}
+            },
+            "required": [
+              "reject_code"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "reject_code"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "input": {
+                "type": "object",
+                "properties": {
+                  "check": {
+                    "const": "bounded_session_receipt"
+                  }
+                },
+                "required": [
+                  "check"
+                ]
+              }
+            },
+            "required": [
+              "input"
+            ]
+          },
+          "then": {
+            "properties": {
+              "required_profiles": {
+                "type": "array",
+                "contains": {
+                  "const": "bounded-session-v1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "input": {
+                "type": "object",
+                "properties": {
+                  "check": {
+                    "const": "normalized_receipt"
+                  },
+                  "execution_profile": {
+                    "const": "BOUNDED_SESSION_V1"
+                  }
+                },
+                "required": [
+                  "check",
+                  "execution_profile"
+                ]
+              }
+            },
+            "required": [
+              "input"
+            ]
+          },
+          "then": {
+            "properties": {
+              "required_profiles": {
+                "type": "array",
+                "contains": {
+                  "const": "bounded-session-v1"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "evidence_axes_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check",
+        "source_primary_provenance",
+        "reported_primary_provenance",
+        "external_dependencies",
+        "support_status",
+        "execution_coverage"
+      ],
+      "properties": {
+        "check": {
+          "const": "evidence_axes"
+        },
+        "source_primary_provenance": {
+          "$ref": "#/$defs/primary_provenance"
+        },
+        "reported_primary_provenance": {
+          "$ref": "#/$defs/primary_provenance"
+        },
+        "external_dependencies": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "support_status": {
+          "enum": [
+            "SUPPORTED",
+            "UNSUPPORTED"
+          ]
+        },
+        "execution_coverage": {
+          "enum": [
+            "CORE_ENFORCED",
+            "PARTIAL",
+            "NONE"
+          ]
+        }
+      }
+    },
+    "core_verified_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check",
+        "primary_provenance",
+        "producer_kind",
+        "expected_core_deployment_id",
+        "actual_producer_id",
+        "invocation_context_authenticated",
+        "event_schema_authenticated",
+        "copied_core_receipt_discriminator"
+      ],
+      "properties": {
+        "check": {
+          "const": "core_verified_authenticity"
+        },
+        "primary_provenance": {
+          "const": "CORE_VERIFIED"
+        },
+        "producer_kind": {
+          "enum": [
+            "CORE",
+            "ENGINE",
+            "PROFILE_COMPONENT",
+            "OFFCHAIN"
+          ]
+        },
+        "expected_core_deployment_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "actual_producer_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "invocation_context_authenticated": {
+          "type": "boolean"
+        },
+        "event_schema_authenticated": {
+          "type": "boolean"
+        },
+        "copied_core_receipt_discriminator": {
+          "type": "boolean"
+        }
+      }
+    },
+    "final_state_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check",
+        "reported_final",
+        "later_untrusted_callback_reachable",
+        "post_callback_checkpoint",
+        "binding_proves_later_state_unreachable"
+      ],
+      "properties": {
+        "check": {
+          "const": "final_state"
+        },
+        "reported_final": {
+          "type": "boolean"
+        },
+        "later_untrusted_callback_reachable": {
+          "type": "boolean"
+        },
+        "post_callback_checkpoint": {
+          "type": "boolean"
+        },
+        "binding_proves_later_state_unreachable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "normalized_receipt_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check",
+        "execution_profile",
+        "committed_context",
+        "receipt"
+      ],
+      "properties": {
+        "check": {
+          "const": "normalized_receipt"
+        },
+        "execution_profile": {
+          "enum": [
+            "ATOMIC_PLAN_V1",
+            "BOUNDED_SESSION_V1"
+          ]
+        },
+        "committed_context": {
+          "$ref": "#/$defs/committed_receipt_context"
+        },
+        "receipt": {
+          "$ref": "#/$defs/normalized_receipt"
+        }
+      }
+    },
+    "committed_receipt_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "envelope_id",
+        "protocol_spec_id",
+        "constitution_id",
+        "core_deployment_id",
+        "execution_coverage",
+        "execution_targets",
+        "principal_authorization_states",
+        "liquidity_domain_revision_ids",
+        "protected_effect_occurrences",
+        "applicable_assessment_group_keys",
+        "opaque_engine_output_commitments",
+        "execution_commitment"
+      ],
+      "properties": {
+        "envelope_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "protocol_spec_id": {
+          "type": "string",
+          "pattern": "^programmable-protocol/[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.]+)?$"
+        },
+        "constitution_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "core_deployment_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "execution_coverage": {
+          "$ref": "#/$defs/execution_coverage"
+        },
+        "execution_targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/execution_target_identity"
+          }
+        },
+        "principal_authorization_states": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/principal_authorization_state"
+          }
+        },
+        "liquidity_domain_revision_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "protected_effect_occurrences": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/protected_effect_occurrence"
+          }
+        },
+        "applicable_assessment_group_keys": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/assessment_group_key"
+          }
+        },
+        "opaque_engine_output_commitments": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/opaque_engine_output_commitment"
+          }
+        },
+        "execution_commitment": {
+          "$ref": "#/$defs/execution_commitment"
+        }
+      }
+    },
+    "normalized_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "receipt_identity_inputs",
+        "protocol_spec_id",
+        "constitution_id",
+        "execution_profile",
+        "execution_coverage",
+        "execution_targets",
+        "principal_authorization_states",
+        "liquidity_domain_revision_ids",
+        "protected_effect_occurrences",
+        "assessment_groups",
+        "opaque_engine_outputs",
+        "execution_commitment"
+      ],
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "receipt_identity_inputs": {
+          "$ref": "#/$defs/receipt_identity_inputs"
+        },
+        "protocol_spec_id": {
+          "type": "string",
+          "pattern": "^programmable-protocol/[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.]+)?$"
+        },
+        "constitution_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "execution_profile": {
+          "enum": [
+            "ATOMIC_PLAN_V1",
+            "BOUNDED_SESSION_V1"
+          ]
+        },
+        "execution_coverage": {
+          "$ref": "#/$defs/execution_coverage"
+        },
+        "execution_targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/execution_target_identity"
+          }
+        },
+        "principal_authorization_states": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/principal_authorization_state"
+          }
+        },
+        "liquidity_domain_revision_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "protected_effect_occurrences": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/protected_effect_occurrence"
+          }
+        },
+        "assessment_groups": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/assessment_group_record"
+          }
+        },
+        "opaque_engine_outputs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/opaque_engine_output"
+          }
+        },
+        "execution_commitment": {
+          "$ref": "#/$defs/execution_commitment"
+        }
+      }
+    },
+    "receipt_identity_inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "envelope_id",
+        "core_deployment_id",
+        "execution_commitment_digest",
+        "ledger_evidence_ref"
+      ],
+      "properties": {
+        "envelope_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "core_deployment_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "execution_commitment_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "ledger_evidence_ref": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "execution_target_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_target_id",
+        "market_id",
+        "engine_revision_id"
+      ],
+      "properties": {
+        "execution_target_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "market_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "engine_revision_id": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "principal_authorization_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "principal_id",
+        "authorization_scope_id",
+        "authorization_evidence_ref",
+        "replay_mode",
+        "replay_state",
+        "fill_sequence"
+      ],
+      "properties": {
+        "principal_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "authorization_scope_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "authorization_evidence_ref": {
+          "$ref": "#/$defs/identifier"
+        },
+        "replay_mode": {
+          "enum": [
+            "ONE_SHOT",
+            "STORED"
+          ]
+        },
+        "replay_state": {
+          "enum": [
+            "OPEN",
+            "CONSUMED",
+            "CANCELLED",
+            "EXPIRED"
+          ]
+        },
+        "fill_sequence": {
+          "$ref": "#/$defs/decimal"
+        }
+      }
+    },
+    "protected_effect_occurrence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "effect_occurrence_id",
+        "effect_type_id",
+        "execution_target_id",
+        "authorization_scope_id",
+        "commitment_position",
+        "primary_provenance",
+        "external_dependencies",
+        "support_status",
+        "execution_coverage",
+        "evidence_ref"
+      ],
+      "properties": {
+        "effect_occurrence_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "effect_type_id": {
+          "type": "string",
+          "pattern": "^programmable\\.effect\\.[a-z0-9][a-z0-9_.-]*\\.v[0-9]+$"
+        },
+        "execution_target_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "authorization_scope_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "commitment_position": {
+          "$ref": "#/$defs/effect_commitment_position"
+        },
+        "primary_provenance": {
+          "const": "CORE_VERIFIED"
+        },
+        "external_dependencies": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "support_status": {
+          "const": "SUPPORTED"
+        },
+        "execution_coverage": {
+          "const": "CORE_ENFORCED"
+        },
+        "evidence_ref": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "effect_commitment_position": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "effect_ordinal"
+          ],
+          "properties": {
+            "kind": {
+              "const": "ATOMIC_PLAN_V1"
+            },
+            "effect_ordinal": {
+              "$ref": "#/$defs/decimal"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "segment_ordinal",
+            "effect_ordinal"
+          ],
+          "properties": {
+            "kind": {
+              "const": "BOUNDED_SESSION_V1"
+            },
+            "segment_ordinal": {
+              "$ref": "#/$defs/decimal"
+            },
+            "effect_ordinal": {
+              "$ref": "#/$defs/decimal"
+            }
+          }
+        }
+      ]
+    },
+    "assessment_group_key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "core_deployment_id",
+        "constitution_id",
+        "authorization_scope_id",
+        "assessment_principal_id",
+        "asset_profile_id",
+        "native_asset_id"
+      ],
+      "properties": {
+        "core_deployment_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "constitution_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "authorization_scope_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "assessment_principal_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "asset_profile_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "native_asset_id": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "assessment_group_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "group_key",
+        "applicable_debit_present",
+        "basis_before",
+        "fill_basis",
+        "basis_after",
+        "assessment_before",
+        "assessment_delta",
+        "assessment_after",
+        "remainder_before",
+        "remainder_after",
+        "gross_assessment_debit",
+        "external_tax_withheld",
+        "funded_credit",
+        "liability_delta"
+      ],
+      "properties": {
+        "group_key": {
+          "$ref": "#/$defs/assessment_group_key"
+        },
+        "applicable_debit_present": {
+          "const": true
+        },
+        "basis_before": {
+          "$ref": "#/$defs/decimal"
+        },
+        "fill_basis": {
+          "$ref": "#/$defs/decimal"
+        },
+        "basis_after": {
+          "$ref": "#/$defs/decimal"
+        },
+        "assessment_before": {
+          "$ref": "#/$defs/decimal"
+        },
+        "assessment_delta": {
+          "$ref": "#/$defs/decimal"
+        },
+        "assessment_after": {
+          "$ref": "#/$defs/decimal"
+        },
+        "remainder_before": {
+          "$ref": "#/$defs/decimal"
+        },
+        "remainder_after": {
+          "$ref": "#/$defs/decimal"
+        },
+        "gross_assessment_debit": {
+          "$ref": "#/$defs/decimal"
+        },
+        "external_tax_withheld": {
+          "$ref": "#/$defs/decimal"
+        },
+        "funded_credit": {
+          "$ref": "#/$defs/decimal"
+        },
+        "liability_delta": {
+          "$ref": "#/$defs/decimal"
+        }
+      }
+    },
+    "opaque_engine_output_commitment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_target_id",
+        "output_digest",
+        "evidence_ref"
+      ],
+      "properties": {
+        "execution_target_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "output_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "evidence_ref": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "opaque_engine_output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_target_id",
+        "output_digest",
+        "primary_provenance",
+        "external_dependencies",
+        "support_status",
+        "execution_coverage",
+        "evidence_ref"
+      ],
+      "properties": {
+        "execution_target_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "output_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "primary_provenance": {
+          "const": "ENGINE_ATTESTED"
+        },
+        "external_dependencies": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "support_status": {
+          "$ref": "#/$defs/support_status"
+        },
+        "execution_coverage": {
+          "$ref": "#/$defs/execution_coverage"
+        },
+        "evidence_ref": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "execution_commitment": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/atomic_plan_commitment"
+        },
+        {
+          "$ref": "#/$defs/bounded_session_commitment"
+        }
+      ]
+    },
+    "atomic_plan_commitment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "plan_digest"
+      ],
+      "properties": {
+        "kind": {
+          "const": "ATOMIC_PLAN_V1"
+        },
+        "plan_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "bounded_session_commitment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "session_id",
+        "final_transcript_digest",
+        "segment_commitments",
+        "final_zero_obligation_checkpoint"
+      ],
+      "properties": {
+        "kind": {
+          "const": "BOUNDED_SESSION_V1"
+        },
+        "session_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "final_transcript_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "segment_commitments": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/session_segment_commitment"
+          }
+        },
+        "final_zero_obligation_checkpoint": {
+          "$ref": "#/$defs/final_zero_obligation_checkpoint"
+        }
+      }
+    },
+    "session_segment_commitment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "segment_ordinal",
+        "proposed_effects_digest",
+        "realized_observations_digest"
+      ],
+      "properties": {
+        "segment_ordinal": {
+          "$ref": "#/$defs/decimal"
+        },
+        "proposed_effects_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "realized_observations_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "final_zero_obligation_checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "checkpoint_digest",
+        "obligation_state_digest",
+        "remaining_obligation_count",
+        "all_obligations_zero"
+      ],
+      "properties": {
+        "checkpoint_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "obligation_state_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "remaining_obligation_count": {
+          "$ref": "#/$defs/decimal"
+        },
+        "all_obligations_zero": {
+          "type": "boolean"
+        }
+      }
+    },
+    "assessment_receipt_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check",
+        "applicable_debit_present",
+        "assessment_record_present"
+      ],
+      "properties": {
+        "check": {
+          "const": "assessment_receipt"
+        },
+        "applicable_debit_present": {
+          "type": "boolean"
+        },
+        "assessment_record_present": {
+          "type": "boolean"
+        },
+        "assessment_group_key": {
+          "$ref": "#/$defs/identifier"
+        },
+        "assessment_amount": {
+          "$ref": "#/$defs/decimal"
+        }
+      }
+    },
+    "bounded_session_receipt_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check",
+        "executed_segment_ordinals",
+        "receipt_segment_ordinals",
+        "computed_final_transcript_digest",
+        "receipt_final_transcript_digest",
+        "final_obligations",
+        "final_checkpoint_present"
+      ],
+      "properties": {
+        "check": {
+          "const": "bounded_session_receipt"
+        },
+        "executed_segment_ordinals": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/decimal"
+          }
+        },
+        "receipt_segment_ordinals": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/decimal"
+          }
+        },
+        "computed_final_transcript_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "receipt_final_transcript_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "final_obligations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/final_obligation"
+          }
+        },
+        "final_checkpoint_present": {
+          "type": "boolean"
+        }
+      }
+    },
+    "final_obligation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "obligation_key_id",
+        "remaining_amount"
+      ],
+      "properties": {
+        "obligation_key_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "remaining_amount": {
+          "$ref": "#/$defs/decimal"
+        }
+      }
+    },
+    "offchain_valuation_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check",
+        "primary_provenance",
+        "onchain_assessment_state_changed"
+      ],
+      "properties": {
+        "check": {
+          "const": "offchain_valuation"
+        },
+        "primary_provenance": {
+          "$ref": "#/$defs/primary_provenance"
+        },
+        "source_assets": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/source_asset"
+          }
+        },
+        "price_source_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "observation_time": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "onchain_assessment_state_changed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "source_asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asset_profile_id",
+        "native_asset_id"
+      ],
+      "properties": {
+        "asset_profile_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "native_asset_id": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    }
+  }
+}
